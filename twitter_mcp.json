@@ -1,0 +1,7051 @@
+[
+  {
+    "function_name": "createAccountActivityReplayJob",
+    "description": "Creates a replay job to retrieve activities from up to the past 5 days for all subscriptions associated with a given webhook.",
+    "path": "/2/account_activity/replay/webhooks/{webhook_id}/subscriptions/all",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "webhook_id",
+        "in": "path",
+        "description": "The unique identifier for the webhook configuration.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/WebhookConfigId"
+        }
+      },
+      {
+        "name": "from_date",
+        "in": "query",
+        "description": "The oldest (starting) UTC timestamp (inclusive) from which events will be provided, in `yyyymmddhhmm` format.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^\\d{12}$",
+          "example": "202504242000"
+        }
+      },
+      {
+        "name": "to_date",
+        "in": "query",
+        "description": "The latest (ending) UTC timestamp (exclusive) up to which events will be provided, in `yyyymmddhhmm` format.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^\\d{12}$",
+          "example": "202504242200"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "getAccountActivitySubscriptionCount",
+    "description": "Retrieves a count of currently active Account Activity subscriptions.",
+    "path": "/2/account_activity/subscriptions/count",
+    "method": "get",
+    "parameters": [],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "validateAccountActivitySubscription",
+    "description": "Checks a user\u2019s Account Activity subscription for a given webhook.",
+    "path": "/2/account_activity/webhooks/{webhook_id}/subscriptions/all",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "webhook_id",
+        "in": "path",
+        "description": "The webhook ID to check subscription against.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/WebhookConfigId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "dm.read",
+      "dm.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "createAccountActivitySubscription",
+    "description": "Creates an Account Activity subscription for the user and the given webhook.",
+    "path": "/2/account_activity/webhooks/{webhook_id}/subscriptions/all",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "webhook_id",
+        "in": "path",
+        "description": "The webhook ID to check subscription against.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/WebhookConfigId"
+        }
+      }
+    ],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/SubscriptionsCreateRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "dm.read",
+      "dm.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getAccountActivitySubscriptions",
+    "description": "Retrieves a list of all active subscriptions for a given webhook.",
+    "path": "/2/account_activity/webhooks/{webhook_id}/subscriptions/all/list",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "webhook_id",
+        "in": "path",
+        "description": "The webhook ID to pull subscriptions for.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/WebhookConfigId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "deleteAccountActivitySubscription",
+    "description": "Deletes an Account Activity subscription for the given webhook and user ID.",
+    "path": "/2/account_activity/webhooks/{webhook_id}/subscriptions/{user_id}/all",
+    "method": "delete",
+    "parameters": [
+      {
+        "name": "webhook_id",
+        "in": "path",
+        "description": "The webhook ID to check subscription against.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/WebhookConfigId"
+        }
+      },
+      {
+        "name": "user_id",
+        "in": "path",
+        "description": "User ID to unsubscribe from.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "activityStream",
+    "description": "Stream of X Activities",
+    "path": "/2/activity/stream",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "backfill_minutes",
+        "in": "query",
+        "description": "The number of minutes of backfill requested.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp from which the Post labels will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp from which the Post labels will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "getActivitySubscriptions",
+    "description": "Get a list of active subscriptions for XAA",
+    "path": "/2/activity/subscriptions",
+    "method": "get",
+    "parameters": [],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "createActivitySubscription",
+    "description": "Creates a subscription for an X activity event",
+    "path": "/2/activity/subscriptions",
+    "method": "post",
+    "parameters": [],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ActivitySubscriptionCreateRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": []
+  },
+  {
+    "function_name": "deleteActivitySubscription",
+    "description": "Deletes a subscription for an X activity event",
+    "path": "/2/activity/subscriptions/{subscription_id}",
+    "method": "delete",
+    "parameters": [
+      {
+        "name": "subscription_id",
+        "in": "path",
+        "description": "The ID of the subscription to delete.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ActivitySubscriptionId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "updateActivitySubscription",
+    "description": "Updates a subscription for an X activity event",
+    "path": "/2/activity/subscriptions/{subscription_id}",
+    "method": "put",
+    "parameters": [
+      {
+        "name": "subscription_id",
+        "in": "path",
+        "description": "The ID of the subscription to update.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ActivitySubscriptionId"
+        }
+      }
+    ],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ActivitySubscriptionUpdateRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": []
+  },
+  {
+    "function_name": "searchCommunities",
+    "description": "Retrieves a list of Communities matching the specified search query.",
+    "path": "/2/communities/search",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "query",
+        "in": "query",
+        "description": "Query to search communities.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "example": "Love"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of search results to be returned by a request.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 100,
+          "format": "int32",
+          "default": 10
+        }
+      },
+      {
+        "name": "next_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results. The value used with the parameter is pulled directly from the response provided by the API, and should not be modified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/NextToken"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results. The value used with the parameter is pulled directly from the response provided by the API, and should not be modified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/NextToken"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getCommunitiesById",
+    "description": "Retrieves details of a specific Community by its ID.",
+    "path": "/2/communities/{id}",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the Community.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/CommunityId"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "list.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getComplianceJobs",
+    "description": "Retrieves a list of Compliance Jobs filtered by job type and optional status.",
+    "path": "/2/compliance/jobs",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "type",
+        "in": "query",
+        "description": "Type of Compliance Job to list.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "tweets",
+            "users"
+          ]
+        }
+      },
+      {
+        "name": "status",
+        "in": "query",
+        "description": "Status of Compliance Job to list.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "created",
+            "in_progress",
+            "failed",
+            "complete"
+          ]
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "createComplianceJobs",
+    "description": "Creates a new Compliance Job for the specified job type.",
+    "path": "/2/compliance/jobs",
+    "method": "post",
+    "parameters": [],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/CreateComplianceJobRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": []
+  },
+  {
+    "function_name": "getComplianceJobsById",
+    "description": "Retrieves details of a specific Compliance Job by its ID.",
+    "path": "/2/compliance/jobs/{id}",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the Compliance Job to retrieve.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/JobId"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "deleteAllConnections",
+    "description": "Terminates all active streaming connections for the authenticated application.",
+    "path": "/2/connections/all",
+    "method": "delete",
+    "parameters": [],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "createDirectMessagesConversation",
+    "description": "Initiates a new direct message conversation with specified participants.",
+    "path": "/2/dm_conversations",
+    "method": "post",
+    "parameters": [],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/CreateDmConversationRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "dm.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getDirectMessagesEventsByParticipantId",
+    "description": "Retrieves direct message events for a specific conversation.",
+    "path": "/2/dm_conversations/with/{participant_id}/dm_events",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "participant_id",
+        "in": "path",
+        "description": "The ID of the participant user for the One to One DM conversation.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get a specified 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken32"
+        }
+      },
+      {
+        "name": "event_types",
+        "in": "query",
+        "description": "The set of event_types to include in the results.",
+        "required": false,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "MessageCreate",
+              "ParticipantsJoin",
+              "ParticipantsLeave"
+            ]
+          },
+          "default": [
+            "MessageCreate",
+            "ParticipantsLeave",
+            "ParticipantsJoin"
+          ],
+          "example": [
+            "MessageCreate",
+            "ParticipantsLeave"
+          ]
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "dm.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "createDirectMessagesByParticipantId",
+    "description": "Sends a new direct message to a specific participant by their ID.",
+    "path": "/2/dm_conversations/with/{participant_id}/messages",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "participant_id",
+        "in": "path",
+        "description": "The ID of the recipient user that will receive the DM.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      }
+    ],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/CreateMessageRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "dm.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "createDirectMessagesByConversationId",
+    "description": "Sends a new direct message to a specific conversation by its ID.",
+    "path": "/2/dm_conversations/{dm_conversation_id}/messages",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "dm_conversation_id",
+        "in": "path",
+        "description": "The DM Conversation ID.",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/CreateMessageRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "dm.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getDirectMessagesEventsByConversationId",
+    "description": "Retrieves direct message events for a specific conversation.",
+    "path": "/2/dm_conversations/{id}/dm_events",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The DM conversation ID.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/DmConversationId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get a specified 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken32"
+        }
+      },
+      {
+        "name": "event_types",
+        "in": "query",
+        "description": "The set of event_types to include in the results.",
+        "required": false,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "MessageCreate",
+              "ParticipantsJoin",
+              "ParticipantsLeave"
+            ]
+          },
+          "default": [
+            "MessageCreate",
+            "ParticipantsLeave",
+            "ParticipantsJoin"
+          ],
+          "example": [
+            "MessageCreate",
+            "ParticipantsLeave"
+          ]
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "dm.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getDirectMessagesEvents",
+    "description": "Retrieves a list of recent direct message events across all conversations.",
+    "path": "/2/dm_events",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get a specified 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken32"
+        }
+      },
+      {
+        "name": "event_types",
+        "in": "query",
+        "description": "The set of event_types to include in the results.",
+        "required": false,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "MessageCreate",
+              "ParticipantsJoin",
+              "ParticipantsLeave"
+            ]
+          },
+          "default": [
+            "MessageCreate",
+            "ParticipantsLeave",
+            "ParticipantsJoin"
+          ],
+          "example": [
+            "MessageCreate",
+            "ParticipantsLeave"
+          ]
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "dm.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "deleteDirectMessagesEvents",
+    "description": "Deletes a specific direct message event by its ID, if owned by the authenticated user.",
+    "path": "/2/dm_events/{event_id}",
+    "method": "delete",
+    "parameters": [
+      {
+        "name": "event_id",
+        "in": "path",
+        "description": "The ID of the direct-message event to delete.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/DmEventId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "dm.read",
+      "dm.write"
+    ]
+  },
+  {
+    "function_name": "getDirectMessagesEventsById",
+    "description": "Retrieves details of a specific direct message event by its ID.",
+    "path": "/2/dm_events/{event_id}",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "event_id",
+        "in": "path",
+        "description": "dm event id.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/DmEventId"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "dm.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "evaluateCommunityNotes",
+    "description": "Endpoint to evaluate a community note.",
+    "path": "/2/evaluate_note",
+    "method": "post",
+    "parameters": [],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/EvaluateNoteRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "tweet.write"
+    ]
+  },
+  {
+    "function_name": "getInsights28Hr",
+    "description": "Retrieves engagement metrics for specified Posts over the last 28 hours.",
+    "path": "/2/insights/28hr",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "tweet_ids",
+        "in": "query",
+        "description": "List of PostIds for 28hr metrics.",
+        "required": true,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 25,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/components/schemas/TweetId"
+          },
+          "example": [
+            "20"
+          ]
+        }
+      },
+      {
+        "name": "granularity",
+        "in": "query",
+        "description": "granularity of metrics response.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "Daily",
+            "Hourly",
+            "Weekly",
+            "Total"
+          ],
+          "example": "Total"
+        }
+      },
+      {
+        "name": "requested_metrics",
+        "in": "query",
+        "description": "request metrics for historical request.",
+        "required": true,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "AppInstallAttempts",
+              "AppOpens",
+              "DetailExpands",
+              "EmailTweet",
+              "Engagements",
+              "Follows",
+              "HashtagClicks",
+              "Impressions",
+              "Likes",
+              "LinkClicks",
+              "MediaEngagements",
+              "MediaViews",
+              "PermalinkClicks",
+              "ProfileVisits",
+              "QuoteTweets",
+              "Replies",
+              "Retweets",
+              "UniqueVideoViews",
+              "UrlClicks",
+              "UserProfileClicks",
+              "VideoCompletions",
+              "VideoPlayed25Percent",
+              "VideoPlayed50Percent",
+              "VideoPlayed75Percent",
+              "VideoStarts",
+              "VideoViews"
+            ]
+          }
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read"
+    ]
+  },
+  {
+    "function_name": "getInsightsHistorical",
+    "description": "Retrieves historical engagement metrics for specified Posts within a defined time range.",
+    "path": "/2/insights/historical",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "tweet_ids",
+        "in": "query",
+        "description": "List of PostIds for historical metrics.",
+        "required": true,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 25,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/components/schemas/TweetId"
+          },
+          "example": [
+            "20"
+          ]
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The UTC timestamp representing the end of the time range.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The UTC timestamp representing the start of the time range.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "granularity",
+        "in": "query",
+        "description": "granularity of metrics response.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "Daily",
+            "Hourly",
+            "Weekly",
+            "Total"
+          ],
+          "example": "Total"
+        }
+      },
+      {
+        "name": "requested_metrics",
+        "in": "query",
+        "description": "request metrics for historical request.",
+        "required": true,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "AppInstallAttempts",
+              "AppOpens",
+              "DetailExpands",
+              "EmailTweet",
+              "Engagements",
+              "Follows",
+              "HashtagClicks",
+              "Impressions",
+              "Likes",
+              "LinkClicks",
+              "MediaEngagements",
+              "MediaViews",
+              "PermalinkClicks",
+              "ProfileVisits",
+              "QuoteTweets",
+              "Replies",
+              "Retweets",
+              "UniqueVideoViews",
+              "UrlClicks",
+              "UserProfileClicks",
+              "VideoCompletions",
+              "VideoPlayed25Percent",
+              "VideoPlayed50Percent",
+              "VideoPlayed75Percent",
+              "VideoStarts",
+              "VideoViews"
+            ]
+          }
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read"
+    ]
+  },
+  {
+    "function_name": "streamLikesCompliance",
+    "description": "Streams all compliance data related to Likes for Users.",
+    "path": "/2/likes/compliance/stream",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "backfill_minutes",
+        "in": "query",
+        "description": "The number of minutes of backfill requested.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp from which the Likes Compliance events will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp from which the Likes Compliance events will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "streamLikesFirehose",
+    "description": "Streams all public Likes in real-time.",
+    "path": "/2/likes/firehose/stream",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "backfill_minutes",
+        "in": "query",
+        "description": "The number of minutes of backfill requested.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "partition",
+        "in": "query",
+        "description": "The partition number.",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp to which the Likes will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp to which the Posts will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "streamLikesSample10",
+    "description": "Streams a 10% sample of public Likes in real-time.",
+    "path": "/2/likes/sample10/stream",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "backfill_minutes",
+        "in": "query",
+        "description": "The number of minutes of backfill requested.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "partition",
+        "in": "query",
+        "description": "The partition number.",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp to which the Likes will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp to which the Posts will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "createLists",
+    "description": "Creates a new List for the authenticated user.",
+    "path": "/2/lists",
+    "method": "post",
+    "parameters": [],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ListCreateRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "list.read",
+      "list.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "deleteLists",
+    "description": "Deletes a specific List owned by the authenticated user by its ID.",
+    "path": "/2/lists/{id}",
+    "method": "delete",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the List to delete.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ListId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "list.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getListsById",
+    "description": "Retrieves details of a specific List by its ID.",
+    "path": "/2/lists/{id}",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the List.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ListId"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "list.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "updateLists",
+    "description": "Updates the details of a specific List owned by the authenticated user by its ID.",
+    "path": "/2/lists/{id}",
+    "method": "put",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the List to modify.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ListId"
+        }
+      }
+    ],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ListUpdateRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "list.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getListsFollowers",
+    "description": "Retrieves a list of Users who follow a specific List by its ID.",
+    "path": "/2/lists/{id}/followers",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the List.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ListId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get a specified 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationTokenLong"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "list.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getListsMembers",
+    "description": "Retrieves a list of Users who are members of a specific List by its ID.",
+    "path": "/2/lists/{id}/members",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the List.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ListId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get a specified 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationTokenLong"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "list.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "addListsMember",
+    "description": "Adds a User to a specific List by its ID.",
+    "path": "/2/lists/{id}/members",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the List for which to add a member.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ListId"
+        }
+      }
+    ],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ListAddUserRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "list.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "removeListsMemberByUserId",
+    "description": "Removes a User from a specific List by its ID and the User\u2019s ID.",
+    "path": "/2/lists/{id}/members/{user_id}",
+    "method": "delete",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the List to remove a member.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ListId"
+        }
+      },
+      {
+        "name": "user_id",
+        "in": "path",
+        "description": "The ID of User that will be removed from the List.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "list.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getListsPosts",
+    "description": "Retrieves a list of Posts associated with a specific List by its ID.",
+    "path": "/2/lists/{id}/tweets",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the List.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ListId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "list.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getMediaByMediaKeys",
+    "description": "Retrieves details of Media files by their media keys.",
+    "path": "/2/media",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "media_keys",
+        "in": "query",
+        "description": "A comma separated list of Media Keys. Up to 100 are allowed in a single request.",
+        "required": true,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/components/schemas/MediaKey"
+          }
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read"
+    ]
+  },
+  {
+    "function_name": "getMediaAnalytics",
+    "description": "Retrieves analytics data for media.",
+    "path": "/2/media/analytics",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "media_keys",
+        "in": "query",
+        "description": "A comma separated list of Media Keys. Up to 100 are allowed in a single request.",
+        "required": true,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/components/schemas/MediaKey"
+          }
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The UTC timestamp representing the end of the time range.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The UTC timestamp representing the start of the time range.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "granularity",
+        "in": "query",
+        "description": "The granularity for the search counts results.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "hourly",
+            "daily",
+            "total"
+          ],
+          "default": "daily"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read"
+    ]
+  },
+  {
+    "function_name": "createMediaMetadata",
+    "description": "Creates metadata for a Media file.",
+    "path": "/2/media/metadata",
+    "method": "post",
+    "parameters": [],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/MetadataCreateRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "media.write"
+    ]
+  },
+  {
+    "function_name": "deleteMediaSubtitles",
+    "description": "Deletes subtitles for a specific Media file.",
+    "path": "/2/media/subtitles",
+    "method": "delete",
+    "parameters": [],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/SubtitlesDeleteRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "media.write"
+    ]
+  },
+  {
+    "function_name": "createMediaSubtitles",
+    "description": "Creates subtitles for a specific Media file.",
+    "path": "/2/media/subtitles",
+    "method": "post",
+    "parameters": [],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/SubtitlesCreateRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "media.write"
+    ]
+  },
+  {
+    "function_name": "getMediaUploadStatus",
+    "description": "Retrieves the status of a Media upload by its ID.",
+    "path": "/2/media/upload",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "media_id",
+        "in": "query",
+        "description": "Media id for the requested media upload status.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/MediaId"
+        }
+      },
+      {
+        "name": "command",
+        "in": "query",
+        "description": "The command for the media upload request.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "STATUS"
+          ]
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "media.write"
+    ]
+  },
+  {
+    "function_name": "mediaUpload",
+    "description": "Uploads a media file for use in posts or other content.",
+    "path": "/2/media/upload",
+    "method": "post",
+    "parameters": [],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/MediaUploadRequestOneShot"
+          }
+        },
+        "multipart/form-data": {
+          "schema": {
+            "$ref": "#/components/schemas/MediaUploadRequestOneShot"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "media.write"
+    ]
+  },
+  {
+    "function_name": "initializeMediaUpload",
+    "description": "Initializes a media upload.",
+    "path": "/2/media/upload/initialize",
+    "method": "post",
+    "parameters": [],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/MediaUploadConfigRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "media.write"
+    ]
+  },
+  {
+    "function_name": "appendMediaUpload",
+    "description": "Appends data to a Media upload request.",
+    "path": "/2/media/upload/{id}/append",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The media identifier for the media to perform the append operation.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/MediaId"
+        }
+      }
+    ],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/MediaUploadAppendRequest"
+          }
+        },
+        "multipart/form-data": {
+          "schema": {
+            "$ref": "#/components/schemas/MediaUploadAppendRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "media.write"
+    ]
+  },
+  {
+    "function_name": "finalizeMediaUpload",
+    "description": "Finalizes a Media upload request.",
+    "path": "/2/media/upload/{id}/finalize",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The media id of the targeted media to finalize.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/MediaId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "media.write"
+    ]
+  },
+  {
+    "function_name": "getMediaByMediaKey",
+    "description": "Retrieves details of a specific Media file by its media key.",
+    "path": "/2/media/{media_key}",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "media_key",
+        "in": "path",
+        "description": "A single Media Key.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/MediaKey"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read"
+    ]
+  },
+  {
+    "function_name": "createCommunityNotes",
+    "description": "Creates a community note endpoint for LLM use case.",
+    "path": "/2/notes",
+    "method": "post",
+    "parameters": [],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/CreateNoteRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "tweet.write"
+    ]
+  },
+  {
+    "function_name": "searchCommunityNotesWritten",
+    "description": "Returns all the community notes written by the user.",
+    "path": "/2/notes/search/notes_written",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "test_mode",
+        "in": "query",
+        "description": "If true, return the notes the caller wrote for the test. If false, return the notes the caller wrote on the product.",
+        "required": true,
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "Pagination token to get next set of posts eligible for notes.",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "Max results to return.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 10
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read"
+    ]
+  },
+  {
+    "function_name": "searchEligiblePosts",
+    "description": "Returns all the posts that are eligible for community notes.",
+    "path": "/2/notes/search/posts_eligible_for_notes",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "test_mode",
+        "in": "query",
+        "description": "If true, return a list of posts that are for the test. If false, return a list of posts that the bots can write proposed notes on the product.",
+        "required": true,
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "Pagination token to get next set of posts eligible for notes.",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "Max results to return.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 10
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read"
+    ]
+  },
+  {
+    "function_name": "deleteCommunityNotes",
+    "description": "Deletes a community note.",
+    "path": "/2/notes/{id}",
+    "method": "delete",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The community note id to delete.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/NoteId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.write"
+    ]
+  },
+  {
+    "function_name": "getOpenApiSpec",
+    "description": "Retrieves the full OpenAPI Specification in JSON format. (See https://github.com/OAI/OpenAPI-Specification/blob/master/README.md)",
+    "path": "/2/openapi.json",
+    "method": "get",
+    "parameters": [],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "getSpacesByIds",
+    "description": "Retrieves details of multiple Spaces by their IDs.",
+    "path": "/2/spaces",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "ids",
+        "in": "query",
+        "description": "The list of Space IDs to return.",
+        "required": true,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "description": "The unique identifier of this Space.",
+            "pattern": "^[a-zA-Z0-9]{1,13}$",
+            "example": "1SLjjRYNejbKM"
+          }
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "space.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getSpacesByCreatorIds",
+    "description": "Retrieves details of Spaces created by specified User IDs.",
+    "path": "/2/spaces/by/creator_ids",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "user_ids",
+        "in": "query",
+        "description": "The IDs of Users to search through.",
+        "required": true,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/components/schemas/UserId"
+          }
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "space.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "searchSpaces",
+    "description": "Retrieves a list of Spaces matching the specified search query.",
+    "path": "/2/spaces/search",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "query",
+        "in": "query",
+        "description": "The search query.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "example": "crypto"
+        }
+      },
+      {
+        "name": "state",
+        "in": "query",
+        "description": "The state of Spaces to search for.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "live",
+            "scheduled",
+            "all"
+          ],
+          "default": "all"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The number of results to return.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "space.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getSpacesById",
+    "description": "Retrieves details of a specific space by its ID.",
+    "path": "/2/spaces/{id}",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the Space to be retrieved.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "The unique identifier of this Space.",
+          "pattern": "^[a-zA-Z0-9]{1,13}$",
+          "example": "1SLjjRYNejbKM"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "space.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getSpacesBuyers",
+    "description": "Retrieves a list of Users who purchased tickets to a specific Space by its ID.",
+    "path": "/2/spaces/{id}/buyers",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the Space to be retrieved.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "The unique identifier of this Space.",
+          "pattern": "^[a-zA-Z0-9]{1,13}$",
+          "example": "1SLjjRYNejbKM"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get a specified 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken32"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "space.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getSpacesPosts",
+    "description": "Retrieves a list of Posts shared in a specific Space by its ID.",
+    "path": "/2/spaces/{id}/tweets",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the Space to be retrieved.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "description": "The unique identifier of this Space.",
+          "pattern": "^[a-zA-Z0-9]{1,13}$",
+          "example": "1SLjjRYNejbKM"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The number of Posts to fetch from the provided space. If not provided, the value will default to the maximum of 100.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 100,
+          "example": 25
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "space.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getTrendsByWoeid",
+    "description": "Retrieves trending topics for a specific location identified by its WOEID.",
+    "path": "/2/trends/by/woeid/{woeid}",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "woeid",
+        "in": "path",
+        "description": "The WOEID of the place to lookup a trend for.",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      {
+        "name": "max_trends",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "format": "int32",
+          "default": 20
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "getPostsByIds",
+    "description": "Retrieves details of multiple Posts by their IDs.",
+    "path": "/2/tweets",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "ids",
+        "in": "query",
+        "description": "A comma separated list of Post IDs. Up to 100 are allowed in a single request.",
+        "required": true,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/components/schemas/TweetId"
+          }
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "createPosts",
+    "description": "Creates a new Post for the authenticated user, or edits an existing Post when edit_options are provided.",
+    "path": "/2/tweets",
+    "method": "post",
+    "parameters": [],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/TweetCreateRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "tweet.read",
+      "tweet.write",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getPostsAnalytics",
+    "description": "Retrieves analytics data for specified Posts within a defined time range.",
+    "path": "/2/tweets/analytics",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "ids",
+        "in": "query",
+        "description": "A comma separated list of Post IDs. Up to 100 are allowed in a single request.",
+        "required": true,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/components/schemas/TweetId"
+          }
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The UTC timestamp representing the end of the time range.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The UTC timestamp representing the start of the time range.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "granularity",
+        "in": "query",
+        "description": "The granularity for the search counts results.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "hourly",
+            "daily",
+            "weekly",
+            "total"
+          ],
+          "default": "total"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "streamPostsCompliance",
+    "description": "Streams all compliance data related to Posts.",
+    "path": "/2/tweets/compliance/stream",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "backfill_minutes",
+        "in": "query",
+        "description": "The number of minutes of backfill requested.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "partition",
+        "in": "query",
+        "description": "The partition number.",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp from which the Post Compliance events will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp to which the Post Compliance events will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "getPostsCountsAll",
+    "description": "Retrieves the count of Posts matching a search query from the full archive.",
+    "path": "/2/tweets/counts/all",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "query",
+        "in": "query",
+        "description": "One query/rule/filter for matching Posts. Refer to https://t.co/rulelength to identify the max query length.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "example": "(from:TwitterDev OR from:TwitterAPI) has:media -is:retweet"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The oldest UTC timestamp (from most recent 7 days) from which the Posts will be provided. Timestamp is in second granularity and is inclusive (i.e. 12:00:01 includes the first second of the minute).",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The newest, most recent UTC timestamp to which the Posts will be provided. Timestamp is in second granularity and is exclusive (i.e. 12:00:01 excludes the first second of the minute).",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "since_id",
+        "in": "query",
+        "description": "Returns results with a Post ID greater than (that is, more recent than) the specified ID.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "until_id",
+        "in": "query",
+        "description": "Returns results with a Post ID less than (that is, older than) the specified ID.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "next_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results. The value used with the parameter is pulled directly from the response provided by the API, and should not be modified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results. The value used with the parameter is pulled directly from the response provided by the API, and should not be modified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": "granularity",
+        "in": "query",
+        "description": "The granularity for the search counts results.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "minute",
+            "hour",
+            "day"
+          ],
+          "default": "hour"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "getPostsCountsRecent",
+    "description": "Retrieves the count of Posts from the last 7 days matching a search query.",
+    "path": "/2/tweets/counts/recent",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "query",
+        "in": "query",
+        "description": "One query/rule/filter for matching Posts. Refer to https://t.co/rulelength to identify the max query length.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "example": "(from:TwitterDev OR from:TwitterAPI) has:media -is:retweet"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The oldest UTC timestamp (from most recent 7 days) from which the Posts will be provided. Timestamp is in second granularity and is inclusive (i.e. 12:00:01 includes the first second of the minute).",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The newest, most recent UTC timestamp to which the Posts will be provided. Timestamp is in second granularity and is exclusive (i.e. 12:00:01 excludes the first second of the minute).",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "since_id",
+        "in": "query",
+        "description": "Returns results with a Post ID greater than (that is, more recent than) the specified ID.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "until_id",
+        "in": "query",
+        "description": "Returns results with a Post ID less than (that is, older than) the specified ID.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "next_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results. The value used with the parameter is pulled directly from the response provided by the API, and should not be modified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results. The value used with the parameter is pulled directly from the response provided by the API, and should not be modified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": "granularity",
+        "in": "query",
+        "description": "The granularity for the search counts results.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "minute",
+            "hour",
+            "day"
+          ],
+          "default": "hour"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "streamPostsFirehose",
+    "description": "Streams all public Posts in real-time.",
+    "path": "/2/tweets/firehose/stream",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "backfill_minutes",
+        "in": "query",
+        "description": "The number of minutes of backfill requested.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "partition",
+        "in": "query",
+        "description": "The partition number.",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp to which the Posts will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp to which the Posts will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "streamPostsFirehoseEn",
+    "description": "Streams all public English-language Posts in real-time.",
+    "path": "/2/tweets/firehose/stream/lang/en",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "backfill_minutes",
+        "in": "query",
+        "description": "The number of minutes of backfill requested.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "partition",
+        "in": "query",
+        "description": "The partition number.",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp to which the Posts will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp to which the Posts will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "streamPostsFirehoseJa",
+    "description": "Streams all public Japanese-language Posts in real-time.",
+    "path": "/2/tweets/firehose/stream/lang/ja",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "backfill_minutes",
+        "in": "query",
+        "description": "The number of minutes of backfill requested.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "partition",
+        "in": "query",
+        "description": "The partition number.",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp to which the Posts will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp to which the Posts will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "streamPostsFirehoseKo",
+    "description": "Streams all public Korean-language Posts in real-time.",
+    "path": "/2/tweets/firehose/stream/lang/ko",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "backfill_minutes",
+        "in": "query",
+        "description": "The number of minutes of backfill requested.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "partition",
+        "in": "query",
+        "description": "The partition number.",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp to which the Posts will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp to which the Posts will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "streamPostsFirehosePt",
+    "description": "Streams all public Portuguese-language Posts in real-time.",
+    "path": "/2/tweets/firehose/stream/lang/pt",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "backfill_minutes",
+        "in": "query",
+        "description": "The number of minutes of backfill requested.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "partition",
+        "in": "query",
+        "description": "The partition number.",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp to which the Posts will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp to which the Posts will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "streamLabelsCompliance",
+    "description": "Streams all labeling events applied to Posts.",
+    "path": "/2/tweets/label/stream",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "backfill_minutes",
+        "in": "query",
+        "description": "The number of minutes of backfill requested.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp from which the Post labels will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp from which the Post labels will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "streamPostsSample",
+    "description": "Streams a 1% sample of public Posts in real-time.",
+    "path": "/2/tweets/sample/stream",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "backfill_minutes",
+        "in": "query",
+        "description": "The number of minutes of backfill requested.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "format": "int32"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "streamPostsSample10",
+    "description": "Streams a 10% sample of public Posts in real-time.",
+    "path": "/2/tweets/sample10/stream",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "backfill_minutes",
+        "in": "query",
+        "description": "The number of minutes of backfill requested.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "partition",
+        "in": "query",
+        "description": "The partition number.",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp to which the Posts will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp to which the Posts will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "searchPostsAll",
+    "description": "Retrieves Posts from the full archive matching a search query.",
+    "path": "/2/tweets/search/all",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "query",
+        "in": "query",
+        "description": "One query/rule/filter for matching Posts. Refer to https://t.co/rulelength to identify the max query length.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "example": "(from:TwitterDev OR from:TwitterAPI) has:media -is:retweet"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The oldest UTC timestamp from which the Posts will be provided. Timestamp is in second granularity and is inclusive (i.e. 12:00:01 includes the first second of the minute).",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The newest, most recent UTC timestamp to which the Posts will be provided. Timestamp is in second granularity and is exclusive (i.e. 12:00:01 excludes the first second of the minute).",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "since_id",
+        "in": "query",
+        "description": "Returns results with a Post ID greater than (that is, more recent than) the specified ID.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "until_id",
+        "in": "query",
+        "description": "Returns results with a Post ID less than (that is, older than) the specified ID.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of search results to be returned by a request.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 500,
+          "format": "int32",
+          "default": 10
+        }
+      },
+      {
+        "name": "next_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results. The value used with the parameter is pulled directly from the response provided by the API, and should not be modified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results. The value used with the parameter is pulled directly from the response provided by the API, and should not be modified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": "sort_order",
+        "in": "query",
+        "description": "This order in which to return results.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "recency",
+            "relevancy"
+          ]
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "searchPostsRecent",
+    "description": "Retrieves Posts from the last 7 days matching a search query.",
+    "path": "/2/tweets/search/recent",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "query",
+        "in": "query",
+        "description": "One query/rule/filter for matching Posts. Refer to https://t.co/rulelength to identify the max query length.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "example": "(from:TwitterDev OR from:TwitterAPI) has:media -is:retweet"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The oldest UTC timestamp from which the Posts will be provided. Timestamp is in second granularity and is inclusive (i.e. 12:00:01 includes the first second of the minute).",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The newest, most recent UTC timestamp to which the Posts will be provided. Timestamp is in second granularity and is exclusive (i.e. 12:00:01 excludes the first second of the minute).",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "since_id",
+        "in": "query",
+        "description": "Returns results with a Post ID greater than (that is, more recent than) the specified ID.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "until_id",
+        "in": "query",
+        "description": "Returns results with a Post ID less than (that is, older than) the specified ID.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of search results to be returned by a request.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 100,
+          "format": "int32",
+          "default": 10
+        }
+      },
+      {
+        "name": "next_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results. The value used with the parameter is pulled directly from the response provided by the API, and should not be modified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results. The value used with the parameter is pulled directly from the response provided by the API, and should not be modified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": "sort_order",
+        "in": "query",
+        "description": "This order in which to return results.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "recency",
+            "relevancy"
+          ]
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "streamPosts",
+    "description": "Streams Posts in real-time matching the active rule set.",
+    "path": "/2/tweets/search/stream",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "backfill_minutes",
+        "in": "query",
+        "description": "The number of minutes of backfill requested.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp from which the Posts will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp to which the Posts will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "getRules",
+    "description": "Retrieves the active rule set or a subset of rules for the filtered stream.",
+    "path": "/2/tweets/search/stream/rules",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "ids",
+        "in": "query",
+        "description": "A comma-separated list of Rule IDs.",
+        "required": false,
+        "schema": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/RuleId"
+          }
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "format": "int32",
+          "default": 1000
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This value is populated by passing the 'next_token' returned in a request to paginate through results.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 16
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "updateRules",
+    "description": "Adds or deletes rules from the active rule set for the filtered stream.",
+    "path": "/2/tweets/search/stream/rules",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "dry_run",
+        "in": "query",
+        "description": "Dry Run can be used with both the add and delete action, with the expected result given, but without actually taking any action in the system (meaning the end state will always be as it was when the request was submitted). This is particularly useful to validate rule changes.",
+        "required": false,
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "delete_all",
+        "in": "query",
+        "description": "Delete All can be used to delete all of the rules associated this client app, it should be specified with no other parameters. Once deleted, rules cannot be recovered.",
+        "required": false,
+        "schema": {
+          "type": "boolean"
+        }
+      }
+    ],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/AddOrDeleteRulesRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": []
+  },
+  {
+    "function_name": "getRuleCounts",
+    "description": "Retrieves the count of rules in the active rule set for the filtered stream.",
+    "path": "/2/tweets/search/stream/rules/counts",
+    "method": "get",
+    "parameters": [
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "getWebhooksStreamLinks",
+    "description": "Get a list of webhook links associated with a filtered stream ruleset.",
+    "path": "/2/tweets/search/webhooks",
+    "method": "get",
+    "parameters": [],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "deleteWebhooksStreamLink",
+    "description": "Deletes a link from FilteredStream events to the given webhook.",
+    "path": "/2/tweets/search/webhooks/{webhook_id}",
+    "method": "delete",
+    "parameters": [
+      {
+        "name": "webhook_id",
+        "in": "path",
+        "description": "The webhook ID to link to your FilteredStream ruleset.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/WebhookConfigId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "createWebhooksStreamLink",
+    "description": "Creates a link to deliver FilteredStream events to the given webhook.",
+    "path": "/2/tweets/search/webhooks/{webhook_id}",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "webhook_id",
+        "in": "path",
+        "description": "The webhook ID to link to your FilteredStream ruleset.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/WebhookConfigId"
+        }
+      },
+      {
+        "name": "tweet.fields",
+        "in": "query",
+        "description": "A comma separated list of Tweet fields to display.",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "expansions",
+        "in": "query",
+        "description": "A comma separated list of fields to expand.",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "media.fields",
+        "in": "query",
+        "description": "A comma separated list of Media fields to display.",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "poll.fields",
+        "in": "query",
+        "description": "A comma separated list of Poll fields to display.",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "user.fields",
+        "in": "query",
+        "description": "A comma separated list of User fields to display.",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "place.fields",
+        "in": "query",
+        "description": "A comma separated list of Place fields to display.",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "deletePosts",
+    "description": "Deletes a specific Post by its ID, if owned by the authenticated user.",
+    "path": "/2/tweets/{id}",
+    "method": "delete",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the Post to be deleted.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "tweet.write",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getPostsById",
+    "description": "Retrieves details of a specific Post by its ID.",
+    "path": "/2/tweets/{id}",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "A single Post ID.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getPostsLikingUsers",
+    "description": "Retrieves a list of Users who liked a specific Post by its ID.",
+    "path": "/2/tweets/{id}/liking_users",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "A single Post ID.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "like.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getPostsQuotedPosts",
+    "description": "Retrieves a list of Posts that quote a specific Post by its ID.",
+    "path": "/2/tweets/{id}/quote_tweets",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "A single Post ID.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results to be returned.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 100,
+          "format": "int32",
+          "default": 10
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get a specified 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": "exclude",
+        "in": "query",
+        "description": "The set of entities to exclude (e.g. 'replies' or 'retweets').",
+        "required": false,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "replies",
+              "retweets"
+            ]
+          },
+          "example": [
+            "replies",
+            "retweets"
+          ]
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getPostsRepostedBy",
+    "description": "Retrieves a list of Users who reposted a specific Post by its ID.",
+    "path": "/2/tweets/{id}/retweeted_by",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "A single Post ID.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getPostsReposts",
+    "description": "Retrieves a list of Posts that repost a specific Post by its ID.",
+    "path": "/2/tweets/{id}/retweets",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "A single Post ID.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "hidePostsReply",
+    "description": "Hides or unhides a reply to a conversation owned by the authenticated user.",
+    "path": "/2/tweets/{tweet_id}/hidden",
+    "method": "put",
+    "parameters": [
+      {
+        "name": "tweet_id",
+        "in": "path",
+        "description": "The ID of the reply that you want to hide or unhide.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      }
+    ],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/TweetHideRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "tweet.moderate.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsage",
+    "description": "Retrieves usage statistics for Posts over a specified number of days.",
+    "path": "/2/usage/tweets",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "days",
+        "in": "query",
+        "description": "The number of days for which you need usage for.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 90,
+          "format": "int32",
+          "default": 7
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "getUsersByIds",
+    "description": "Retrieves details of multiple Users by their IDs.",
+    "path": "/2/users",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "ids",
+        "in": "query",
+        "description": "A list of User IDs, comma-separated. You can specify up to 100 IDs.",
+        "required": true,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/components/schemas/UserId"
+          }
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersByUsernames",
+    "description": "Retrieves details of multiple Users by their usernames.",
+    "path": "/2/users/by",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "usernames",
+        "in": "query",
+        "description": "A list of usernames, comma-separated.",
+        "required": true,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "description": "The X handle (screen name) of this User.",
+            "pattern": "^[A-Za-z0-9_]{1,15}$"
+          },
+          "example": "TwitterDev,TwitterAPI"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersByUsername",
+    "description": "Retrieves details of a specific User by their username.",
+    "path": "/2/users/by/username/{username}",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "username",
+        "in": "path",
+        "description": "A username.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_]{1,15}$"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "streamUsersCompliance",
+    "description": "Streams all compliance data related to Users.",
+    "path": "/2/users/compliance/stream",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "backfill_minutes",
+        "in": "query",
+        "description": "The number of minutes of backfill requested.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "partition",
+        "in": "query",
+        "description": "The partition number.",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp from which the User Compliance events will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp from which the User Compliance events will be provided.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "getUsersMe",
+    "description": "Retrieves details of the authenticated user.",
+    "path": "/2/users/me",
+    "method": "get",
+    "parameters": [
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getTrendsPersonalizedTrends",
+    "description": "Retrieves personalized trending topics for the authenticated user.",
+    "path": "/2/users/personalized_trends",
+    "method": "get",
+    "parameters": [
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersRepostsOfMe",
+    "description": "Retrieves a list of Posts that repost content from the authenticated user.",
+    "path": "/2/users/reposts_of_me",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "timeline.read",
+      "tweet.read"
+    ]
+  },
+  {
+    "function_name": "searchUsers",
+    "description": "Retrieves a list of Users matching a search query.",
+    "path": "/2/users/search",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "query",
+        "in": "query",
+        "description": "TThe the query string by which to query for users.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserSearchQueryVnext"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": "next_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results. The value used with the parameter is pulled directly from the response provided by the API, and should not be modified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersById",
+    "description": "Retrieves details of a specific User by their ID.",
+    "path": "/2/users/{id}",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the User to lookup.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersBlocking",
+    "description": "Retrieves a list of Users blocked by the specified User ID.",
+    "path": "/2/users/{id}/blocking",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User for whom to return results.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get a specified 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken32"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "block.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersBookmarks",
+    "description": "Retrieves a list of Posts bookmarked by the authenticated user.",
+    "path": "/2/users/{id}/bookmarks",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User for whom to return results.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "bookmark.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "createUsersBookmark",
+    "description": "Adds a post to the authenticated user\u2019s bookmarks.",
+    "path": "/2/users/{id}/bookmarks",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User for whom to add bookmarks.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      }
+    ],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/BookmarkAddRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "bookmark.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersBookmarkFolders",
+    "description": "Retrieves a list of Bookmark folders created by the authenticated user.",
+    "path": "/2/users/{id}/bookmarks/folders",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User for whom to return results.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "bookmark.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersBookmarksByFolderId",
+    "description": "Retrieves Posts in a specific Bookmark folder by its ID for the authenticated user.",
+    "path": "/2/users/{id}/bookmarks/folders/{folder_id}",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User for whom to return results.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      },
+      {
+        "name": "folder_id",
+        "in": "path",
+        "description": "The ID of the Bookmark Folder that the authenticated User is trying to fetch Posts for.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/BookmarkFolderId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "bookmark.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "deleteUsersBookmark",
+    "description": "Removes a Post from the authenticated user\u2019s Bookmarks by its ID.",
+    "path": "/2/users/{id}/bookmarks/{tweet_id}",
+    "method": "delete",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User whose bookmark is to be removed.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      },
+      {
+        "name": "tweet_id",
+        "in": "path",
+        "description": "The ID of the Post that the source User is removing from bookmarks.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "bookmark.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "blockUsersDms",
+    "description": "Blocks direct messages to or from a specific User by their ID for the authenticated user.",
+    "path": "/2/users/{id}/dm/block",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the target User that the authenticated user requesting to block dms for.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "dm.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "unblockUsersDms",
+    "description": "Unblocks direct messages to or from a specific User by their ID for the authenticated user.",
+    "path": "/2/users/{id}/dm/unblock",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the target User that the authenticated user requesting to unblock dms for.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "dm.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersFollowedLists",
+    "description": "Retrieves a list of Lists followed by a specific User by their ID.",
+    "path": "/2/users/{id}/followed_lists",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the User to lookup.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get a specified 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationTokenLong"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "list.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "followList",
+    "description": "Causes the authenticated user to follow a specific List by its ID.",
+    "path": "/2/users/{id}/followed_lists",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User that will follow the List.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      }
+    ],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ListFollowedRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "list.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "unfollowList",
+    "description": "Causes the authenticated user to unfollow a specific List by its ID.",
+    "path": "/2/users/{id}/followed_lists/{list_id}",
+    "method": "delete",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User that will unfollow the List.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      },
+      {
+        "name": "list_id",
+        "in": "path",
+        "description": "The ID of the List to unfollow.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ListId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "list.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersFollowers",
+    "description": "Retrieves a list of Users who follow a specific User by their ID.",
+    "path": "/2/users/{id}/followers",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the User to lookup.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get a specified 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken32"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "follows.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersFollowing",
+    "description": "Retrieves a list of Users followed by a specific User by their ID.",
+    "path": "/2/users/{id}/following",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the User to lookup.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get a specified 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken32"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "follows.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "followUser",
+    "description": "Causes the authenticated user to follow a specific user by their ID.",
+    "path": "/2/users/{id}/following",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User that is requesting to follow the target User.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      }
+    ],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/UsersFollowingCreateRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "follows.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersLikedPosts",
+    "description": "Retrieves a list of Posts liked by a specific User by their ID.",
+    "path": "/2/users/{id}/liked_tweets",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the User to lookup.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 100,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "like.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "likePost",
+    "description": "Causes the authenticated user to Like a specific Post by its ID.",
+    "path": "/2/users/{id}/likes",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User that is requesting to like the Post.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      }
+    ],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/UsersLikesCreateRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "like.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "unlikePost",
+    "description": "Causes the authenticated user to Unlike a specific Post by its ID.",
+    "path": "/2/users/{id}/likes/{tweet_id}",
+    "method": "delete",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User that is requesting to unlike the Post.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      },
+      {
+        "name": "tweet_id",
+        "in": "path",
+        "description": "The ID of the Post that the User is requesting to unlike.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "like.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersListMemberships",
+    "description": "Retrieves a list of Lists that a specific User is a member of by their ID.",
+    "path": "/2/users/{id}/list_memberships",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the User to lookup.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get a specified 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationTokenLong"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "list.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersMentions",
+    "description": "Retrieves a list of Posts that mention a specific User by their ID.",
+    "path": "/2/users/{id}/mentions",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the User to lookup.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      },
+      {
+        "name": "since_id",
+        "in": "query",
+        "description": "The minimum Post ID to be included in the result set. This parameter takes precedence over start_time if both are specified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "until_id",
+        "in": "query",
+        "description": "The maximum Post ID to be included in the result set. This parameter takes precedence over end_time if both are specified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 100,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp from which the Posts will be provided. The since_id parameter takes precedence if it is also specified.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp to which the Posts will be provided. The until_id parameter takes precedence if it is also specified.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersMuting",
+    "description": "Retrieves a list of Users muted by the authenticated user.",
+    "path": "/2/users/{id}/muting",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User for whom to return results.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationTokenLong"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "mute.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "muteUser",
+    "description": "Causes the authenticated user to mute a specific User by their ID.",
+    "path": "/2/users/{id}/muting",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User that is requesting to mute the target User.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      }
+    ],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/MuteUserRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "mute.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersOwnedLists",
+    "description": "Retrieves a list of Lists owned by a specific User by their ID.",
+    "path": "/2/users/{id}/owned_lists",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the User to lookup.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32",
+          "default": 100
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get a specified 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationTokenLong"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "list.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersPinnedLists",
+    "description": "Retrieves a list of Lists pinned by the authenticated user.",
+    "path": "/2/users/{id}/pinned_lists",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User for whom to return results.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "list.read",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "pinList",
+    "description": "Causes the authenticated user to pin a specific List by its ID.",
+    "path": "/2/users/{id}/pinned_lists",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User that will pin the List.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      }
+    ],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ListPinnedRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "list.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "unpinList",
+    "description": "Causes the authenticated user to unpin a specific List by its ID.",
+    "path": "/2/users/{id}/pinned_lists/{list_id}",
+    "method": "delete",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User for whom to return results.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      },
+      {
+        "name": "list_id",
+        "in": "path",
+        "description": "The ID of the List to unpin.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ListId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "list.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "repostPost",
+    "description": "Causes the authenticated user to repost a specific Post by its ID.",
+    "path": "/2/users/{id}/retweets",
+    "method": "post",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User that is requesting to repost the Post.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      }
+    ],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/UsersRetweetsCreateRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": [
+      "tweet.read",
+      "tweet.write",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "unrepostPost",
+    "description": "Causes the authenticated user to unrepost a specific Post by its ID.",
+    "path": "/2/users/{id}/retweets/{source_tweet_id}",
+    "method": "delete",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User that is requesting to repost the Post.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      },
+      {
+        "name": "source_tweet_id",
+        "in": "path",
+        "description": "The ID of the Post that the User is requesting to unretweet.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "tweet.write",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersTimeline",
+    "description": "Retrieves a reverse chronological list of Posts in the authenticated User\u2019s Timeline.",
+    "path": "/2/users/{id}/timelines/reverse_chronological",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the authenticated source User to list Reverse Chronological Timeline Posts of.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      },
+      {
+        "name": "since_id",
+        "in": "query",
+        "description": "The minimum Post ID to be included in the result set. This parameter takes precedence over start_time if both are specified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "until_id",
+        "in": "query",
+        "description": "The maximum Post ID to be included in the result set. This parameter takes precedence over end_time if both are specified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": "exclude",
+        "in": "query",
+        "description": "The set of entities to exclude (e.g. 'replies' or 'retweets').",
+        "required": false,
+        "schema": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "replies",
+              "retweets"
+            ]
+          },
+          "example": [
+            "replies",
+            "retweets"
+          ]
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp from which the Posts will be provided. The since_id parameter takes precedence if it is also specified.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp to which the Posts will be provided. The until_id parameter takes precedence if it is also specified.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getUsersPosts",
+    "description": "Retrieves a list of posts authored by a specific User by their ID.",
+    "path": "/2/users/{id}/tweets",
+    "method": "get",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "The ID of the User to lookup.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      },
+      {
+        "name": "since_id",
+        "in": "query",
+        "description": "The minimum Post ID to be included in the result set. This parameter takes precedence over start_time if both are specified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "until_id",
+        "in": "query",
+        "description": "The maximum Post ID to be included in the result set. This parameter takes precedence over end_time if both are specified.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/TweetId"
+        }
+      },
+      {
+        "name": "max_results",
+        "in": "query",
+        "description": "The maximum number of results.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 100,
+          "format": "int32"
+        }
+      },
+      {
+        "name": "pagination_token",
+        "in": "query",
+        "description": "This parameter is used to get the next 'page' of results.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/PaginationToken36"
+        }
+      },
+      {
+        "name": "exclude",
+        "in": "query",
+        "description": "The set of entities to exclude (e.g. 'replies' or 'retweets').",
+        "required": false,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "replies",
+              "retweets"
+            ]
+          },
+          "example": [
+            "replies",
+            "retweets"
+          ]
+        }
+      },
+      {
+        "name": "start_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The earliest UTC timestamp from which the Posts will be provided. The since_id parameter takes precedence if it is also specified.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": "end_time",
+        "in": "query",
+        "description": "YYYY-MM-DDTHH:mm:ssZ. The latest UTC timestamp to which the Posts will be provided. The until_id parameter takes precedence if it is also specified.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      },
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "unfollowUser",
+    "description": "Causes the authenticated user to unfollow a specific user by their ID.",
+    "path": "/2/users/{source_user_id}/following/{target_user_id}",
+    "method": "delete",
+    "parameters": [
+      {
+        "name": "source_user_id",
+        "in": "path",
+        "description": "The ID of the authenticated source User that is requesting to unfollow the target User.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      },
+      {
+        "name": "target_user_id",
+        "in": "path",
+        "description": "The ID of the User that the source User is requesting to unfollow.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "follows.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "unmuteUser",
+    "description": "Causes the authenticated user to unmute a specific user by their ID.",
+    "path": "/2/users/{source_user_id}/muting/{target_user_id}",
+    "method": "delete",
+    "parameters": [
+      {
+        "name": "source_user_id",
+        "in": "path",
+        "description": "The ID of the authenticated source User that is requesting to unmute the target User.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserIdMatchesAuthenticatedUser"
+        }
+      },
+      {
+        "name": "target_user_id",
+        "in": "path",
+        "description": "The ID of the User that the source User is requesting to unmute.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/UserId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": [
+      "mute.write",
+      "tweet.read",
+      "users.read"
+    ]
+  },
+  {
+    "function_name": "getWebhooks",
+    "description": "Get a list of webhook configs associated with a client app.",
+    "path": "/2/webhooks",
+    "method": "get",
+    "parameters": [
+      {
+        "name": null,
+        "in": null,
+        "description": "No description.",
+        "required": false,
+        "schema": null
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "createWebhooks",
+    "description": "Creates a new webhook configuration.",
+    "path": "/2/webhooks",
+    "method": "post",
+    "parameters": [],
+    "request_body": {
+      "description": "No description.",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/WebhookConfigCreateRequest"
+          }
+        }
+      }
+    },
+    "security_scopes": []
+  },
+  {
+    "function_name": "deleteWebhooks",
+    "description": "Deletes an existing webhook configuration.",
+    "path": "/2/webhooks/{webhook_id}",
+    "method": "delete",
+    "parameters": [
+      {
+        "name": "webhook_id",
+        "in": "path",
+        "description": "The ID of the webhook to delete.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/WebhookConfigId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  },
+  {
+    "function_name": "validateWebhooks",
+    "description": "Triggers a CRC check for a given webhook.",
+    "path": "/2/webhooks/{webhook_id}",
+    "method": "put",
+    "parameters": [
+      {
+        "name": "webhook_id",
+        "in": "path",
+        "description": "The ID of the webhook to check.",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/WebhookConfigId"
+        }
+      }
+    ],
+    "request_body": null,
+    "security_scopes": []
+  }
+]
