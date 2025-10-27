@@ -1,0 +1,201 @@
+openapi: 3.0.3
+info:
+  title: GitLab MCP API
+  version: 1.3.1
+  description: Minimal GitLab MCP API using Macaroon-based authentication; server issues macaroons.
+
+servers:
+  - url: https://gitlab.example.com/api/v4
+
+components:
+  securitySchemes:
+    MacaroonAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: macaroon
+      description: "Use: Authorization: Bearer <macaroon>"
+
+  schemas:
+    Project:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        description: { type: string }
+        visibility:
+          type: string
+          enum: [private, internal, public]
+      required: [id, name]
+
+    NewProject:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        visibility:
+          type: string
+          enum: [private, internal, public]
+      required: [name]
+
+    MergeRequest:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        state:
+          type: string
+          enum: [opened, closed, merged]
+      required: [id, title]
+
+    Issue:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        state:
+          type: string
+          enum: [opened, closed]
+      required: [id, title]
+
+    TokenRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Requester identity (used to look up permissions).
+        password:
+          type: string
+          description: Credential or shared secret.
+      required: [username, password]
+
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: Serialized macaroon token issued by the server.
+        caveats:
+          type: object
+          description: Caveats attached by the server (for client visibility).
+        expires_in:
+          type: integer
+          description: Expiration time in seconds.
+      required: [access_token]
+
+security:
+  - MacaroonAuth: []
+
+paths:
+  /auth/token:
+    post:
+      summary: Issue a new macaroon token (server chooses caveats)
+      operationId: issueMacaroon
+      description: Server authenticates credentials and issues a macaroon with server-determined caveats.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+      responses:
+        '201':
+          description: A newly issued macaroon
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Invalid credentials
+
+  /auth/verify:
+    post:
+      summary: Verify an existing macaroon
+      operationId: verifyMacaroon
+      description: Validates a macaroon and returns its caveats if valid (requires auth).
+      security:
+        - MacaroonAuth: []
+      responses:
+        '200':
+          description: Macaroon valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid: { type: boolean }
+                  caveats: { type: object }
+        '401':
+          description: Invalid or expired macaroon
+
+  /projects:
+    get:
+      summary: List projects
+      security:
+        - MacaroonAuth: []
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+
+    post:
+      summary: Create project
+      security:
+        - MacaroonAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewProject'
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+  /projects/{id}/merge_requests:
+    get:
+      summary: Get merge requests for a project
+      security:
+        - MacaroonAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List of merge requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MergeRequest'
+
+  /projects/{id}/issues:
+    get:
+      summary: List issues for a project
+      security:
+        - MacaroonAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List of issues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Issue'
