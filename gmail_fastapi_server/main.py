@@ -18,7 +18,7 @@ from googleapiclient.errors import HttpError
 load_dotenv()
 
 # Define the scopes for the Gmail API
-SCOPES = ['https://www.googleapis.com/auth/gmail.readonly', 'https://www.googleapis.com/auth/gmail.send']
+SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
 app = FastAPI()
 

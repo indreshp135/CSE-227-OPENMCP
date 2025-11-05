@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "gmail": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--with",
+        "fastmcp",
+        "fastmcp",
+        "run",
+        "/Users/indresh/Desktop/cse210/webserver/mcp_server/mcp_server.py"
+      ]
+    }
+  }
+}
