@@ -35,6 +35,12 @@ def add_caveat(macaroon: Macaroon, field: str):
     logger.info(f"Added caveat: {caveat_str}")
     return macaroon
 
+def add_caveat_allowed_functions(macaroon: Macaroon, function_name: str):
+    caveat_str = "allowed_function = {}".format(function_name)
+    macaroon.add_first_party_caveat(caveat_str)
+    logger.info(f"Added caveat: {caveat_str}")
+    return macaroon
+
 def verify_macaroon(macaroon: Macaroon, secret_key: str) -> bool:
     try:
         v = Verifier()
@@ -58,6 +64,16 @@ def get_allowed_fields(macaroon: Macaroon) -> set:
             if field_name:
                 allowed_fields.add(field_name)
     return allowed_fields
+
+def get_allowed_functions(macaroon: Macaroon) -> set:
+    """Extracts the set of allowed functions from the macaroon caveats."""
+    allowed_functions = set()
+    for caveat in macaroon.caveats:
+        if caveat.caveat_id.startswith("allowed_function = "):
+            function_name = caveat.caveat_id.split(" = ", 1)[1].strip()
+            if function_name:
+                allowed_functions.add(function_name)
+    return allowed_functions
 
 # --- Macaroon Middleware with Logging ---
 class MacaroonMiddleware(Middleware):
