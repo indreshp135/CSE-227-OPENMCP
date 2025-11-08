@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 # --- Macaroon Setup (from original code) ---
 secret_key = "this_is_a_secret_key"
 
+MAX_ATTEMPTS = 5
+
 def create_macaroon():
     identifier = "gmail_macaroon"
     # Macaroon location is typically the service it controls
@@ -82,6 +84,27 @@ class MacaroonMiddleware(Middleware):
         if not verify_macaroon(macaroon, secret_key):
             raise Exception("Invalid macaroon or missing 'service = gmail' caveat.")
         
+        # Enforcement of number of attempts logic
+        attempt_count = context.fastmcp_context.get_state("attempt_count") or 0  
+        attempt_count += 1  # <-- added
+        context.fastmcp_context.set_state("attempt_count", attempt_count) 
+        logger.info(f"Attempt #{attempt_count} of {MAX_ATTEMPTS}.") 
+
+        max_attempts_caveat = None  
+        for caveat in macaroon.caveats:  
+            if caveat.caveat_id.startswith("attempts <="):  
+                try:  
+                    max_attempts_caveat = int(caveat.caveat_id.split("<=")[1].strip()) 
+                except ValueError: 
+                    pass  
+
+        if max_attempts_caveat is None: 
+            max_attempts_caveat = MAX_ATTEMPTS  
+
+        if attempt_count > max_attempts_caveat: 
+            logger.warning(f"Macaroon attempt limit exceeded ({attempt_count}/{max_attempts_caveat}).")  
+            raise Exception("Macaroon attempt limit exceeded.")  
+
         # 2. Execute the tool call
         logger.info("Executing the next tool call...")
         result = await call_next(context)
