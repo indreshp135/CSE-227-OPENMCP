@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import requests
 import json
+import re
 from pymacaroons import Macaroon, Verifier
 
 # --- Configuration for logging ---
@@ -98,6 +99,44 @@ class MacaroonMiddleware(Middleware):
         if not verify_macaroon(macaroon, secret_key):
             raise Exception("Invalid macaroon or missing 'service = gmail' caveat.")
         
+        allowed_functions = get_allowed_functions(macaroon)
+
+        # Safe extractor for tool name from various MiddlewareContext shapes
+        def _extract_tool_name(ctx) -> Optional[str]:
+            msg = getattr(ctx, "message", None)
+            if msg is None:
+                return None
+            # Common: message has a .name attribute
+            if hasattr(msg, "name"):
+                return getattr(msg, "name")
+            # Nested message.message.name
+            inner = getattr(msg, "message", None)
+            if inner and hasattr(inner, "name"):
+                return getattr(inner, "name")
+            # dict-like
+            try:
+                if isinstance(msg, dict):
+                    return msg.get("name") or (msg.get("message") and msg["message"].get("name"))
+            except Exception:
+                pass
+            # Fallback: regex on repr
+            m = re.search(r"name=['\"]([^'\"]+)['\"]", repr(msg))
+            if m:
+                return m.group(1)
+            return None
+
+        tool_name = _extract_tool_name(context)
+        logger.info("Tool being called: %s", tool_name)
+
+        # If we couldn't extract the name, log and skip the allowed-functions enforcement
+        if tool_name is None:
+            logger.warning("Could not extract tool name from context; skipping allowed-functions check.")
+        else:
+            logger.info(f"Allowed functions in macaroon: {allowed_functions}")
+            if tool_name not in allowed_functions:
+                logger.error(f"Function '{tool_name}' is not allowed by the macaroon.")
+                raise Exception(f"Function '{tool_name}' is not permitted by the current macaroon.")
+        
         # 2. Execute the tool call
         logger.info("Executing the next tool call...")
         result = await call_next(context)
@@ -105,17 +144,34 @@ class MacaroonMiddleware(Middleware):
         
         # Ensure the result content is handled correctly
         tool_result = result.content
+        # Log the raw result safely using formatting to avoid logging TypeError
+        logger.info("Result: %s", tool_result)
         tool_result_dict: List[Dict[str, Any]] = []
         try:
-            if isinstance(tool_result, List) and tool_result and isinstance(tool_result[0], TextContent):
-                tool_result_dict = json.loads(tool_result[0].text)
-                if not isinstance(tool_result_dict, List):
-                    # Handle case where json.loads results in a single dict, wrap it in a list
+            # Case A: framework returned a list of TextContent objects (JSON string inside)
+            if isinstance(tool_result, list) and tool_result and isinstance(tool_result[0], TextContent):
+                try:
+                    tool_result_dict = json.loads(tool_result[0].text)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to JSON-decode TextContent.text: {e}")
+                    raise
+
+                if isinstance(tool_result_dict, dict):
                     tool_result_dict = [tool_result_dict]
+
+            # Case B: framework returned a raw list of dicts (already-parsed JSON)
+            elif isinstance(tool_result, list) and tool_result and isinstance(tool_result[0], dict):
+                tool_result_dict = tool_result
+
+            # Case C: framework returned a single dict
+            elif isinstance(tool_result, dict):
+                tool_result_dict = [tool_result]
+
             else:
+                # Unexpected but we log the actual runtime type to help debugging
                 logger.error(f"Unexpected tool result format: {type(tool_result)}")
                 raise Exception("Unexpected tool result format.")
-        except (json.JSONDecodeError, IndexError) as e:
+        except (json.JSONDecodeError, IndexError, Exception) as e:
             logger.error(f"Failed to process tool result JSON: {e}")
             raise Exception("Failed to process tool result content.")
 
@@ -174,7 +230,7 @@ class MacaroonMiddleware(Middleware):
             fields_after = len(filtered_result[0].keys())
             logger.info(f"First item: {fields_before} fields before filtering, {fields_after} fields after.")
 
-        if isinstance(result.content, List) and result.content and isinstance(result.content[0], TextContent):
+        if isinstance(result.content, list) and result.content and isinstance(result.content[0], TextContent):
             # Update the text content with the filtered result
             result.content[0].text = json.dumps(filtered_result)
             logger.info("Result content updated with filtered JSON.")
