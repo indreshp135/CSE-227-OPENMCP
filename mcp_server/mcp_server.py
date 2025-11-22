@@ -1,6 +1,7 @@
 import logging
 import json
-from typing import Dict, Set, Any, List
+from multiprocessing import context
+from typing import Dict, Optional, Set, Any, List
 from fastmcp import FastMCP, Context
 from fastmcp.server.middleware import Middleware
 from fastmcp.server.auth.providers.github import GitHubProvider
@@ -9,15 +10,17 @@ from fastmcp.server.elicitation import AcceptedElicitation
 from mcp.types import TextContent
 from pymacaroons import Macaroon, Verifier
 import os
+import re
+import dotenv
+
+dotenv.load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-
 # --- Macaroon Configuration ---
 SECRET_KEY = os.environ.get("MACAROON_SECRET_KEY", "this_is_a_secret_key")
 logger.debug("Macaroon secret key loaded (hidden).")
-
 class MacaroonAuthMiddleware(Middleware):
 	"""
 	Middleware that maps OAuth tokens to Macaroons and handles field-level permissions.
@@ -82,7 +85,23 @@ class MacaroonAuthMiddleware(Middleware):
 		macaroon.add_first_party_caveat(caveat_str)
 		logger.debug(f"Added caveat string: {caveat_str}")
 		return macaroon
-
+	def add_caveat_allowed_functions(self, macaroon: Macaroon, function_name: str):
+		caveat_str = "allowed_function = {}".format(function_name)
+		macaroon.add_first_party_caveat(caveat_str)
+		logger.info(f"Added caveat: {caveat_str}")
+		return macaroon
+	
+	def get_allowed_functions(self, macaroon: Macaroon) -> set:
+		"""Extracts the set of allowed functions from the macaroon caveats."""
+		allowed_functions = set()
+		for caveat in macaroon.caveats:
+			logger.info("caveat %s", caveat)
+			if caveat.caveat_id.startswith("allowed_function = "):
+				function_name = caveat.caveat_id.split(" = ", 1)[1].strip()
+				if function_name:
+					allowed_functions.add(function_name)
+		logger.info("Allowed functions: %s", allowed_functions)
+		return allowed_functions
 	def verify_macaroon(self, macaroon: Macaroon, secret_key: str) -> bool:
 		"""Verify macaroon integrity and base requirements."""
 		logger.debug("Verifying macaroon integrity and caveats")
@@ -96,6 +115,8 @@ class MacaroonAuthMiddleware(Middleware):
 				if caveat_id.startswith("user = "):
 					v.satisfy_exact(caveat_id)
 				elif caveat_id.startswith("allowed_field = "):
+					v.satisfy_exact(caveat_id)
+				elif caveat_id.startswith("allowed_function = "):
 					v.satisfy_exact(caveat_id)
 			
 			v.verify(macaroon, secret_key)
@@ -141,6 +162,46 @@ class MacaroonAuthMiddleware(Middleware):
 		if not self.verify_macaroon(macaroon, SECRET_KEY):
 			logger.error("Macaroon verification failed - rejecting request")
 			raise Exception("Invalid macaroon or missing required caveats")
+		allowed_functions = self.get_allowed_functions(macaroon)
+		# Safe extractor for tool name from various MiddlewareContext shapes
+		def _extract_tool_name(ctx) -> Optional[str]:
+			msg = getattr(ctx, "message", None)
+			if msg is None:
+				return None
+			# Common: message has a .name attribute
+			if hasattr(msg, "name"):
+				return getattr(msg, "name")
+			# Nested message.message.name
+			inner = getattr(msg, "message", None)
+			if inner and hasattr(inner, "name"):
+				return getattr(inner, "name")
+			# dict-like
+			try:
+				if isinstance(msg, dict):
+					return msg.get("name") or (msg.get("message") and msg["message"].get("name"))
+			except Exception:
+				pass
+			# Fallback: regex on repr
+			m = re.search(r"name=['\"]([^'\"]+)['\"]", repr(msg))
+			if m:
+				return m.group(1)
+			return None
+		tool_name = _extract_tool_name(context)
+		logger.info("Tool being called: %s", tool_name)
+  
+  
+		# If we couldn't extract the name, log and skip the allowed-functions enforcement
+		if tool_name is None:
+			logger.warning("Could not extract tool name from context; skipping allowed-functions check.")
+		else:
+			logger.info(f"Allowed functions in macaroon: {allowed_functions}")
+   
+			if tool_name not in allowed_functions:
+				# Request permission for function
+				permission_granted = await self._handle_function_permissions(context, tool_name, token_id)
+				if not permission_granted:
+					logger.error(f"Permission denied for function: {tool_name}")
+					raise Exception(f"Permission denied for function: {tool_name}")
 		
 		# 4. Execute tool call
 		logger.info("Executing tool call...")
@@ -179,21 +240,25 @@ class MacaroonAuthMiddleware(Middleware):
 		tool_result = result.content
 		
 		logger.debug("Result content type: %s", type(tool_result))
-		if isinstance(tool_result, List) and tool_result and isinstance(tool_result[0], TextContent):
-			logger.debug("Tool result is a list with TextContent at index 0. Attempting JSON parse.")
+		if isinstance(tool_result, list) and tool_result and isinstance(tool_result[0], TextContent):
 			try:
 				tool_result_dict = json.loads(tool_result[0].text)
-				logger.debug("Parsed JSON tool result successfully")
-				if not isinstance(tool_result_dict, List):
-					tool_result_dict = [tool_result_dict]
-				logger.info("Returning parsed tool result list with length %d", len(tool_result_dict))
-				return tool_result_dict
-			except (json.JSONDecodeError, IndexError) as e:
-				logger.exception(f"Failed to parse tool result JSON: {e}")
+			except json.JSONDecodeError as e:
+				logger.error(f"Failed to JSON-decode TextContent.text: {e}")
 				raise
+			if isinstance(tool_result_dict, dict):
+				tool_result_dict = [tool_result_dict]
+		# Case B: framework returned a raw list of dicts (already-parsed JSON)
+		elif isinstance(tool_result, list) and tool_result and isinstance(tool_result[0], dict):
+			tool_result_dict = tool_result
+		# Case C: framework returned a single dict
+		elif isinstance(tool_result, dict):
+			tool_result_dict = [tool_result]
 		else:
 			logger.warning("Unexpected tool result format; expected List[TextContent]")
 			return []
+
+		return tool_result_dict
 	
 	async def _handle_permissions_and_filter(self, context, tool_result_dict: List[Dict], token_id: str) -> List[Dict]:
 		"""Handle permission elicitation and filter results."""
@@ -249,6 +314,47 @@ class MacaroonAuthMiddleware(Middleware):
 		
 		logger.info(f"Filtered result items count: {len(filtered_result)}")
 		return filtered_result
+
+	# add function for eliciting allowed functions
+	async def _handle_function_permissions(self, context, tool_name: str, token_id: str) -> bool:
+		"""Elicit permission for a function and persist macaroon if granted."""
+		logger.info(f"Handling function permission for tool: {tool_name}")
+
+		# Load current macaroon from context
+		macaroon_serialized = context.fastmcp_context.get_state("macaroon")
+		logger.debug("Loaded macaroon from context state (serialized length=%d)", len(macaroon_serialized))
+		macaroon_current = Macaroon.deserialize(macaroon_serialized)
+
+		# Check if already allowed
+		allowed_functions = self.get_allowed_functions(macaroon_current)
+		if tool_name in allowed_functions:
+			logger.info(f"Function '{tool_name}' is already allowed.")
+			return True
+
+		# Request permission from user
+		logger.warning(f"Function '{tool_name}' not allowed - requesting permission")
+		try:
+			resp = await context.fastmcp_context.elicit(
+				f"Grant access to function: **{tool_name}**?", 
+				response_type=bool
+			)
+			logger.debug(f"Elicitation response received for function '{tool_name}': {type(resp)}")
+		except Exception as e:
+			logger.exception(f"Elicitation failed for function '{tool_name}': {e}")
+			resp = None
+
+		if isinstance(resp, AcceptedElicitation):
+			# Permission granted: add caveat and persist macaroon
+			macaroon_current = self.add_caveat_allowed_functions(macaroon_current, tool_name)
+			updated_macaroon_serialized = macaroon_current.serialize()
+			self.token_to_macaroon[token_id] = updated_macaroon_serialized
+			context.fastmcp_context.set_state("macaroon", updated_macaroon_serialized)
+			logger.info(f"Permission granted for function: {tool_name} and macaroon updated")
+			return True
+		else:
+			logger.info(f"Permission denied or not granted for function: {tool_name}")
+			return False
+
 	
 	def _update_result_content(self, result, filtered_result: List[Dict]):
 		"""Update the result content with filtered data."""
@@ -261,10 +367,8 @@ class MacaroonAuthMiddleware(Middleware):
 			logger.debug("Updated result.content[0].text length=%d", len(result.content[0].text))
 		else:
 			logger.warning("Could not update result content - unexpected format")
-
-
+   
 # --- Example Usage ---
-
 def create_mcp_server_with_macaroon_auth():
 	"""Create MCP server with GitHub auth and macaroon middleware."""
 	logger.info("Creating MCP server with Macaroon authentication")
@@ -296,10 +400,7 @@ def create_mcp_server_with_macaroon_auth():
 	logger.info("Added MacaroonAuthMiddleware to MCP")
 	
 	return mcp
-
-
 # --- Tool Examples ---
-
 def add_gmail_tools(mcp: FastMCP):
 	"""Add Gmail tools to the MCP server."""
 	logger.info("Registering Gmail tools on MCP")
@@ -324,24 +425,6 @@ def add_gmail_tools(mcp: FastMCP):
 			logger.exception(f"Error reading emails: {e}")
 			return [{"error": str(e)}]
 	
-	@mcp.tool
-	async def get_user_profile(ctx: Context):
-		"""Get authenticated user profile."""
-		logger.info("Tool 'get_user_profile' called")
-		token = get_access_token()
-		user_id = ctx.fastmcp_context.get_state("user_id")
-		logger.debug("get_user_profile: user_id=%s, token_claim_keys=%s", user_id, list(token.claims.keys()))
-		
-		profile = {
-			"user_id": user_id,
-			"login": token.claims.get("login"),
-			"name": token.claims.get("name"),
-			"email": token.claims.get("email")
-		}
-		logger.info("Returning user profile for user_id=%s", user_id)
-		return profile
-
-
 if __name__ == "__main__":
 	# Create server with macaroon auth
 	try:
