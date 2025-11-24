@@ -11,6 +11,8 @@ This middleware allows you to enforce policies on tool calls, both before and af
 - **Extensible:** Easily add new policy enforcement logic using a decorator-based system.
 - **Capability-Based Security:** Leverages macaroons to issue time-bound, attenuated credentials.
 - **Field-Level Control:** Redact or allow specific fields in tool outputs.
+- **Elicitation for Dynamic Permissions:** Dynamically request user consent for specific actions or data access at runtime.
+- **Automatic Expiry for Elicited Permissions:** Permissions granted through elicitation can be configured to expire after a specified duration.
 
 ## Installation
 
@@ -22,36 +24,51 @@ pip install mcp-macaroon-middleware
 
 ## Configuration
 
-The middleware is configured through a YAML file that specifies the initial set of caveats to be added to newly created macaroons.
+The middleware is configured through a YAML file that specifies global settings and the initial set of caveats to be added to newly created macaroons.
 
-Create a `policies.yaml` file (or any name you prefer) with a `policies` key:
+Create a `policies.yaml` file (or any name you prefer) with a `config` and `policies` key:
 
 ```yaml
 # config/policies.yaml
+config:
+  # Default expiry for elicited permissions in seconds (e.g., 1 hour)
+  elicit_expiry: 3600
+
 policies:
-  # Allow calling 'read_emails' before execution
-  - "bf:read_emails:*:allow:2026-01-01T00:00:00Z"
+  # Allow calling 'read_emails' before execution with a specific expiry
+  - "bf:read_emails:tool_access:allow:time<20260101T000000Z"
 
-  # After 'get_user_profile' is called, allow access to these fields
-  - "af:get_user_profile:user_id:allow:2026-01-01T00:00:00Z"
-  - "af:get_user_profile:login:allow:2026-01-01T00:00:00Z"
-  - "af:get_user_profile:name:allow:2026-01-01T00:00:00Z"
+  # After 'get_user_profile' is called, allow access to these fields with a specific expiry
+  - "af:get_user_profile:user_profile_fields:allow:user_id:time<20260101T000000Z"
+  - "af:get_user_profile:user_profile_fields:allow:login:time<20260101T000000Z"
+  - "af:get_user_profile:user_profile_fields:allow:name:time<20260101T000000Z"
 
-  # Redact the 'email' field from the result of 'get_user_profile'
-  - "af:get_user_profile:email:redact:2026-01-01T00:00:00Z"
+  # Redact the 'email' field from the result of 'get_user_profile' with a specific expiry
+  - "af:get_user_profile:user_profile_fields:redact:email:time<20260101T000000Z"
+
+  # Elicit permission for attachments when sending emails, with a default expiry
+  - "bf:send_email:tool_access:elicit"
+  - "af:send_email:email_fields:elicit:attachments"
 ```
 
 ### Caveat Format
 
 The caveat format is as follows:
 
-`{phase}:{tool_name}:{field_path}:{action}:{expiry}`
+`{phase}:{tool_name}:{policy_name}:{action}[{params}]:time<{expiry_timestamp}>`
 
 - **`phase`**: `bf` (before) or `af` (after) the tool call.
 - **`tool_name`**: The name of the tool to which the policy applies.
-- **`field_path`**: The field in the tool's input or output to which the policy applies. Use `*` for all fields.
-- **`action`**: The action to take (e.g., `allow`, `redact`, `deny`). This is interpreted by your policy enforcement function.
-- **`expiry`**: An ISO 8601 timestamp (UTC) for when the caveat expires.
+- **`policy_name`**: The name of the policy enforcer to call (e.g., `tool_access`, `user_profile_fields`, `email_fields`).
+- **`action`**: The action to take (`allow`, `deny`, `elicit`). This is interpreted by your policy enforcement function.
+- **`params`**: Optional colon-separated parameters specific to the policy enforcer (e.g., `user_id:login:name` for `user_profile_fields`).
+- **`time<{expiry_timestamp}>`**: An optional expiry timestamp in `YYYYMMDDTHHMMSSZ` format (UTC). If present, the caveat is only valid until this time. This part is automatically added for elicited permissions.
+
+**Examples:**
+
+- `bf:read_emails:tool_access:allow`: Allow access to `read_emails` indefinitely.
+- `af:get_user_profile:user_profile_fields:allow:user_id:login:name:time<20260101T000000Z>`: Allow access to `user_id`, `login`, and `name` fields from `get_user_profile` until Jan 1, 2026.
+- `af:send_email:email_fields:elicit:attachments`: Elicit user permission to send attachments when calling `send_email`. If granted, an `allow` caveat with a configurable expiry will be added.
 
 ## Usage
 

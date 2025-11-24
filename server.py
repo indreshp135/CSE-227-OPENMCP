@@ -26,6 +26,7 @@ def enforce_tool_access_policy(caveat: Caveat, context: Context, result: ToolRes
 def enforce_email_fields_policy(caveat: Caveat, context: Context, result: ToolResult, *fields):
     """Enforces field-level policies on read_emails."""
     logger.info(f"Enforcing policy for read_emails: {caveat.raw}")
+    print
     
     # Only proceed if the action is deny and there is a result to modify
     if caveat.action == ActionType.DENY and result and result.content:
@@ -93,7 +94,7 @@ def create_mcp_server_with_macaroon_auth():
     logger.info("FastMCP instance created: 'Gmail with Macaroons'")
 
     # Add the new macaroon middleware
-    mcp.add_middleware(MacaroonMiddleware("config/policies.yaml", app=mcp))
+    mcp.add_middleware(MacaroonMiddleware(config_path="config/policies.yaml"))
     logger.info("Added MacaroonMiddleware to MCP")
     
     # Set logging level for mcp_macaroon_middleware to DEBUG

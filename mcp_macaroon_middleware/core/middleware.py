@@ -17,13 +17,12 @@ class MacaroonMiddleware(Middleware):
     A production-grade middleware for macaroon-based policy enforcement.
     """
 
-    def __init__(self, config_path: str, app: any):
+    def __init__(self, config_path: str):
         logger.info("Initializing MacaroonMiddleware.")
         config = load_config_from_yaml(config_path)
         self._initial_caveats = config["policies"]
         self._policy_engine = PolicyEngine(
             CaveatValidator(),
-            app=app,
             elicit_expiry=config.get("config", {}).get("elicit_expiry", 3600),
             secret_key=SECRET_KEY
         )

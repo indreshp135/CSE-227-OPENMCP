@@ -17,9 +17,8 @@ class PolicyEngine:
     The policy engine responsible for enforcing macaroon caveats.
     """
 
-    def __init__(self, validator: CaveatValidator, app: Any, elicit_expiry: int, secret_key: str):
+    def __init__(self, validator: CaveatValidator, elicit_expiry: int, secret_key: str):
         self._validator = validator
-        self._app = app
         self._elicit_expiry = elicit_expiry
         self._secret_key = secret_key
         logger.info("PolicyEngine initialized.")
