@@ -1,10 +1,7 @@
 import logging
 from fastmcp import FastMCP, Context
-from fastmcp.tools.tool import ToolResult
 from fastmcp.server.auth.providers.github import GitHubProvider
 from fastmcp.server.dependencies import get_access_token
-from pymacaroons import Macaroon
-from typing import List
 from mcp_macaroon_middleware import MacaroonMiddleware
 import os
 
