@@ -13,6 +13,7 @@ from .core.policy_engine import PolicyEngine
 from .models.caveat import ExecutionPhase
 from .policies.decorators import policy_enforcer
 from .exceptions import MacaroonMiddlewareError, PolicyViolationError
+from .helpers import extract_content_to_dicts, update_result_with_dicts
 
 __all__ = [
     "MacaroonMiddleware",
@@ -21,4 +22,6 @@ __all__ = [
     "policy_enforcer",
     "MacaroonMiddlewareError",
     "PolicyViolationError",
+    "extract_content_to_dicts",
+    "update_result_with_dicts",
 ]

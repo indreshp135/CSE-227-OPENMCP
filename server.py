@@ -4,8 +4,9 @@ from typing import Dict, Any, List
 from fastmcp import FastMCP, Context
 from fastmcp.server.auth.providers.github import GitHubProvider
 from fastmcp.server.dependencies import get_access_token
-from mcp_macaroon_middleware import MacaroonMiddleware, policy_enforcer, PolicyViolationError
+from mcp_macaroon_middleware import MacaroonMiddleware, policy_enforcer, PolicyViolationError, update_result_with_dicts, extract_content_to_dicts
 import os
+from mcp.types import TextContent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -34,6 +35,46 @@ def enforce_tool_access_policy(caveat, context, result):
     elif caveat.action == "deny":
         raise PolicyViolationError(f"Access to tool '{caveat.tool_name}' is denied")
 
+@policy_enforcer("email_fields")
+def enforce_email_fields_policy(caveat, context, result, *fields):
+    """Enforces field-level policies on read_emails."""
+    logger.info(f"Enforcing policy for read_emails: {caveat.raw}")
+    
+    # Only proceed if the action is deny and there is a result to modify
+    if caveat.action == "deny" and result and result.content:
+        try:
+            # 1. Extract current data as Python objects using the helper
+            tool_result_dict = extract_content_to_dicts(result)
+            
+            if not tool_result_dict:
+                logger.debug("No data extracted, skipping redaction.")
+                return
+
+            # 2. Modify data (Redact specified fields)
+            modifications_made = False
+            for email in tool_result_dict:
+                for field in fields:
+                    # Check if field exists and isn't already redacted to avoid redundant work
+                    if field in email and email[field] != "REDACTED":
+                        email[field] = "REDACTED"
+                        modifications_made = True
+            
+            # 3. Re-serialize and update result ONLY if changes were made
+            if modifications_made:
+                # Serialize the modified Python list back to a JSON string
+                update_result_with_dicts(result, tool_result_dict)
+                logger.debug(f"Successfully redacted fields: {fields}")
+            else:
+                logger.debug("Policy enforced, but no requested fields were present to redact.")
+
+        except Exception as e:
+            logger.error(f"Error executing field redaction policy: {e}", exc_info=True)
+            # Depending on security requirements, you might want to raise here 
+            # to fail closed if redaction fails. For now, we log the error.
+            # raise PolicyViolationError("Internal error during policy enforcement") from e
+
+    elif caveat.action == "allow":
+        pass
 # --- Example Usage ---
 
 def create_mcp_server_with_macaroon_auth():

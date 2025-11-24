@@ -41,9 +41,9 @@ class PolicyEngine:
                 if enforcer:
                     logger.debug(f"Executing enforcer for policy '{caveat.policy_name}' with caveat: {caveat.raw}")
                     enforcer(
-                        caveat=caveat,
-                        context=context.fastmcp_context if context else None,
-                        result=result,
+                        caveat,
+                        context.fastmcp_context if context else None,
+                        result,
                         *caveat.params
                     )
                     logger.debug(f"Enforcer for '{caveat.policy_name}' executed successfully.")
