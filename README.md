@@ -1,181 +1,367 @@
 # MCP Macaroon Middleware
 
-**A production-grade, policy-as-code middleware for FastMCP servers that uses macaroons for fine-grained, dynamic, and capability-based authorization.**
+**Production-grade macaroon-based authorization middleware for FastMCP servers with fine-grained, progressive policy enforcement.**
 
-## Table of Contents
-- [Overview](#overview)
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Configuration](#configuration)
-- [Contributing](#contributing)
-- [License](#license)
+[![PyPI version](https://badge.fury.io/py/mcp-macaroon-middleware.svg)](https://badge.fury.io/py/mcp-macaroon-middleware)
 
 ## Overview
 
-`mcp_macaroon_middleware` is a robust and flexible policy-as-code middleware designed to secure FastMCP (Microservices Communication Protocol) servers using the power of macaroons. It provides fine-grained, dynamic, and capability-based authorization, allowing developers to define complex access control policies directly in code. This ensures that your microservices can enforce sophisticated security rules with minimal overhead, leveraging the decentralized and delegated authorization benefits of macaroons.
+`mcp_macaroon_middleware` provides cryptographic capability-based authorization for FastMCP servers using macaroons. Unlike traditional OAuth/JWT tokens, macaroons support **attenuation** (adding restrictions without re-signing), **offline verification**, and **progressive authorization** where permissions can be dynamically elicited from users.
 
-This middleware is ideal for applications requiring:
-- **Decentralized Authorization:** Delegate authorization decisions without centralizing state.
-- **Fine-Grained Access Control:** Specify precise permissions for specific actions and resources.
-- **Context-Aware Policies:** Implement policies that adapt based on request context, macaroon caveats, and external data.
-- **Reduced Trust:** Minimize the need for services to trust each other implicitly, as macaroons carry their own authorization logic.
+**Key Benefits:**
+- **Decentralized Authorization**: Verify tokens without callback to authorization server
+- **Progressive Permissions**: Request additional permissions on-demand via user elicitation
+- **Fine-Grained Control**: Pre-call and post-call policies with field-level access control
+- **Policy-as-Code**: Define authorization rules as Python functions with full type safety
 
 ## Features
 
-- **Macaroon-Based Authorization:** Leverages `pymacaroons` for secure token handling.
-- **Policy-as-Code:** Define authorization policies using Python, offering flexibility and version control.
-- **FastMCP Integration:** Seamlessly integrates with `fastmcp` servers for request interception.
-- **Dynamic Policy Enforcement:** Policies can be updated and enforced without service restarts (depending on configuration).
-- **Redis Caching:** Supports Redis for efficient caching of policy decisions and macaroon validation, improving performance.
-- **Extensible Policy Engine:** Easily extendable to support custom caveat evaluators and enforcement logic.
-- **Detailed Error Handling:** Provides clear exceptions for authorization failures, aiding in debugging and user feedback.
+- 🔐 **Macaroon-based tokens** with cryptographic verification
+- 📋 **Flexible policy system** with pre-call and post-call execution stages
+- 🎯 **Built-in enforcers** for tool access, field redaction, and rate limiting
+- 🔄 **Progressive authorization** via user elicitation with time-bound grants
+- 🎨 **Pluggable architecture** for custom policy enforcers
+- ⚡ **In-memory caching** with per-user macaroon state
+- 🛡️ **FastMCP integration** via standard middleware hooks
 
 ## Installation
 
-To install `mcp_macaroon_middleware`, use pip:
-
 ```bash
-pip install mcp_macaroon_middleware
+pip install mcp-macaroon-middleware
 ```
 
-For development, you can install the development dependencies:
+For development:
 
 ```bash
-pip install "mcp_macaroon_middleware[dev]"
+pip install -e '.[dev]'
 ```
 
-## Usage
+## Quick Start
 
-Integrating the middleware into your FastMCP server involves a few steps:
+### 1. Define Policies (policies.yaml)
 
-1.  **Define your Policies:** Create Python modules that define your authorization policies. These policies will specify how macaroons are validated and what permissions they grant.
+```yaml
+config:
+  secret_key: "your-secret-key-here"
+  elicit_expiry: 3600  # Permission grants valid for 1 hour
 
-    *Example (`policies/my_service_policy.py`):*
-    ```python
-    # policies/my_service_policy.py
-    from mcp_macaroon_middleware.core.policy_engine import PolicyEngine
-    from mcp_macaroon_middleware.models.caveat import Caveat
-    from mcp_macaroon_middleware.policies.decorators import enforce
+policies:
+  # Tool-level access control
+  - "bf:read_emails:tool_access:allow"
+  
+  # Rate limiting (2 attempts)
+  - "bf:read_emails:allow_attempts:allow:2"
+  
+  # Field-level permissions
+  - "af:read_emails:field_access:allow:subject"
+  - "af:read_emails:field_access:deny:body"
+  - "af:read_emails:field_access:elicit:attachments"
+```
 
-    @enforce("my_service:read_data")
-    async def can_read_data(caveats: list[Caveat], context: dict) -> bool:
-        """
-        Policy to check if the macaroon allows reading data.
-        This is a simplified example; real policies would inspect caveats more deeply.
-        """
-        for caveat in caveats:
-            if "has_permission = read" == caveat.payload:
-                return True
-        return False
+**Caveat Format**: `{phase}:{tool}:{policy}:{action}:{params...}`
 
-    @enforce("my_service:write_data")
-    async def can_write_data(caveats: list[Caveat], context: dict) -> bool:
-        """
-        Policy to check if the macaroon allows writing data.
-        """
-        for caveat in caveats:
-            if "has_permission = write" == caveat.payload:
-                return True
-        return False
-    ```
+- **Phase**: `bf` (before call) or `af` (after call)
+- **Action**: `allow`, `deny`, or `elicit` (prompt user)
+- **Params**: Policy-specific parameters (fields, counts, etc.)
 
-2.  **Configure and Apply Middleware:** Instantiate the `MacaroonMiddleware` and apply it to your FastMCP server.
+### 2. Create FastMCP Server
 
-    *Example (`server.py`):*
-    ```python
-    import asyncio
-    from fastmcp.server import FastMCPServer
-    from fastmcp.route import route
-    from mcp_macaroon_middleware.core.middleware import MacaroonMiddleware
-    from mcp_macaroon_middleware.config.loader import ConfigLoader
-    from mcp_macaroon_middleware.policies.default_enforcers import METADATA_ENFORCER
+```python
+from fastmcp import FastMCP
+from fastmcp.server.auth.providers.github import GitHubProvider
+from mcp_macaroon_middleware import MacaroonMiddleware
 
-    # Assuming you have a config.yaml or similar for policy paths and Redis
-    # Example config:
-    # ---
-    # policy_directories:
-    #   - "./policies"
-    # redis:
-    #   host: "localhost"
-    #   port: 6379
-    #   db: 0
-    # ---
+# Initialize with OAuth provider
+auth_provider = GitHubProvider(
+    client_id=GITHUB_CLIENT_ID,
+    client_secret=GITHUB_CLIENT_SECRET,
+    base_url="http://localhost:9001"
+)
 
-    # Load configuration (e.g., from examples/policies.yaml or a custom path)
-    config = ConfigLoader().load_config()
+mcp = FastMCP(name="Secure API", auth=auth_provider)
 
-    # Initialize the middleware with policy directories and optionally a Redis client
-    middleware = MacaroonMiddleware(
-        policy_directories=config.get("policy_directories", []),
-        redis_config=config.get("redis")
-    )
+# Add macaroon middleware
+mcp.add_middleware(MacaroonMiddleware(config_path="./policies.yaml"))
 
-    app = FastMCPServer()
+@mcp.tool
+def read_emails(sender: str, last_n: int = 1):
+    """Read emails with field-level authorization."""
+    return [
+        {
+            "subject": "Meeting Tomorrow",
+            "body": "Let's discuss the project...",
+            "attachments": ["proposal.pdf"]
+        }
+    ]
 
-    @app.route("greet", middleware=middleware)
-    async def greet(name: str):
-        # This route will be protected by the middleware.
-        # The macaroon must satisfy policies configured for "greet" (or default ones).
-        return f"Hello, {name}!"
+mcp.run(transport="http", port=9001)
+```
 
-    @app.route("secure_data", middleware=middleware.enforce("my_service:read_data"))
-    async def secure_data():
-        # This route specifically requires the "my_service:read_data" capability
-        return {"data": "This is highly sensitive information."}
+### 3. Request Flow
 
-    async def main():
-        await app.start()
-        print("FastMCP server started on port 8000")
+1. **Initial Request**: User authenticates via OAuth
+2. **Macaroon Creation**: Middleware creates macaroon with policies from YAML
+3. **Pre-call Enforcement**: Checks tool access and rate limits
+4. **Tool Execution**: Your function runs normally
+5. **Post-call Enforcement**: Applies field redaction or prompts for permissions
+6. **Progressive Auth**: If `elicit` action, user prompted for permission
+7. **Cached State**: Updated macaroon stored for subsequent requests
 
-    if __name__ == "__main__":
-        asyncio.run(main())
-    ```
-    *Note: The `METADATA_ENFORCER` is a default enforcer that can be used directly or extended.*
+## Policy System
 
-3.  **Client-Side with Macaroons:** On the client side, you would obtain a macaroon (e.g., from an authentication service) and attach it to your FastMCP requests.
+### Built-in Enforcers
 
-    *Example (conceptual client interaction):*
-    ```python
-    import httpx
-    # Assuming you have a way to generate/obtain macaroons
-    # from pymacaroons import Macaroon, MACAROON_V2
-    # m = Macaroon(
-    #     location='myloc',
-    #     identifier='we used this for an id',
-    #     key='this is our super secret key for signing',
-    #     version=MACAROON_V2
-    # )
-    # m.add_first_party_caveat('has_permission = read')
-    # serialized_macaroon = m.serialize()
+#### Tool Access Control
+```python
+# In policies.yaml
+- "bf:read_emails:tool_access:allow"    # Grant access
+- "bf:send_email:tool_access:deny"      # Block access
+```
 
-    async def make_request(macaroon_token: str):
-        async with httpx.AsyncClient() as client:
-            headers = {"Authorization": f"Bearer {macaroon_token}"}
-            # Example for "greet" endpoint
-            response = await client.post("http://localhost:8000/greet", json={"name": "World"}, headers=headers)
-            print(response.json())
+#### Field-Level Redaction
+```python
+# Redact specific fields from responses
+- "af:read_emails:field_access:deny:body"
+- "af:read_emails:field_access:deny:attachments"
+```
 
-            # Example for "secure_data" endpoint
-            response = await client.post("http://localhost:8000/secure_data", headers=headers)
-            print(response.json())
+#### Progressive Authorization
+```python
+# Prompt user for permission on first access
+- "af:read_emails:field_access:elicit:attachments"
 
-    # asyncio.run(make_request(serialized_macaroon))
-    ```
+# User prompted: "Grant permission for: af:read_emails:field_access:elicit:attachments?"
+# If approved, adds time-bound caveat: "...elicit:attachments:time<20250324T120000Z"
+```
+
+#### Rate Limiting
+```python
+# Allow 3 calls, then deny
+- "bf:api_call:allow_attempts:allow:3"
+```
+
+### Custom Enforcers
+
+Create custom policies by registering enforcement functions:
+
+```python
+from mcp_macaroon_middleware import policy_enforcer, Caveat
+from typing import List
+
+@policy_enforcer("business_hours")
+def enforce_business_hours(
+    caveat: Caveat,
+    context: Context,
+    result: ToolResult,
+    macaroon: Macaroon
+) -> List[Caveat]:
+    """Only allow access during business hours (9 AM - 5 PM)."""
+    from datetime import datetime
+    
+    hour = datetime.now().hour
+    if not (9 <= hour < 17):
+        raise PolicyViolationError("Access only allowed during business hours")
+    
+    return []  # No new caveats to add
+```
+
+Use in policies.yaml:
+```yaml
+- "bf:sensitive_tool:business_hours:allow"
+```
+
+### Advanced Example: Document Ownership
+
+```python
+@policy_enforcer("document_owner")
+def enforce_document_ownership(
+    caveat: Caveat,
+    context: Context,
+    result: ToolResult,
+    macaroon: Macaroon,
+    document_id: str
+) -> List[Caveat]:
+    """Verify user owns the document."""
+    user_id = context.get("user_id")
+    
+    # Check ownership in your DB
+    if not db.check_owner(document_id, user_id):
+        raise PolicyViolationError(f"User {user_id} doesn't own document {document_id}")
+    
+    return []
+```
+
+```yaml
+# In policies.yaml - pass document_id as parameter
+- "bf:get_document:document_owner:allow:doc_123"
+```
+
+## Architecture
+
+```
+┌─────────────────┐
+│  OAuth Token    │
+│  (GitHub, etc)  │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────────────┐
+│  MacaroonMiddleware     │
+│  • Creates macaroon     │
+│  • Caches per-user      │
+└────────┬────────────────┘
+         │
+         ▼
+┌─────────────────────────┐
+│   PolicyEngine          │
+│  • Parse caveats        │
+│  • Execute enforcers    │
+│  • Handle elicitation   │
+└────────┬────────────────┘
+         │
+    ┌────┴────┐
+    ▼         ▼
+┌───────┐ ┌───────┐
+│ BEFORE│ │ AFTER │
+│ phase │ │ phase │
+└───────┘ └───────┘
+    │         │
+    ▼         ▼
+ Tool      Field
+Access   Redaction
+```
 
 ## Configuration
 
-The middleware can be configured via a YAML file (or other methods you integrate) to specify:
+### YAML Configuration
 
--   `policy_directories`: A list of paths where your policy modules are located. The `ConfigLoader` will automatically discover and load policies from these directories.
--   `redis`: Configuration for the Redis client (host, port, db) for caching and session management.
+```yaml
+config:
+  secret_key: "..."           # Macaroon signing key
+  elicit_expiry: 3600         # Permission grant TTL (seconds)
 
-Refer to `examples/policies.yaml` for a typical configuration structure.
+policies:
+  - "bf:tool:policy:action:params..."
+```
+
+## Examples
+
+See the `examples/` directory:
+- `server.py` - Complete FastMCP server with GitHub OAuth
+- `policies.yaml` - Sample policy configuration
+
+Run the example:
+```bash
+cd examples
+pip install -r requirements.txt
+python server.py
+```
+
+## API Reference
+
+### MacaroonMiddleware
+
+```python
+MacaroonMiddleware(config_path: str)
+```
+
+**Parameters:**
+- `config_path`: Path to policies.yaml configuration file
+
+**Methods:**
+- `on_call_tool(context, call_next)`: Main middleware hook
+
+### Policy Enforcer Decorator
+
+```python
+@policy_enforcer(policy_name: str)
+def my_enforcer(
+    caveat: Caveat,
+    context: Context,
+    result: ToolResult,
+    macaroon: Macaroon,
+    *params
+) -> List[Caveat]:
+    """
+    Args:
+        caveat: Parsed caveat object
+        context: FastMCP request context
+        result: Tool execution result (None for pre-call)
+        macaroon: Current macaroon instance
+        *params: Additional parameters from caveat string
+    
+    Returns:
+        List of new caveats to add to macaroon
+    """
+    pass
+```
+
+### Caveat Model
+
+```python
+@dataclass
+class Caveat:
+    raw: str                          # Original caveat string
+    execution_phase: ExecutionPhase   # BEFORE or AFTER
+    tool_name: str                    # Target tool
+    policy_name: str                  # Policy enforcer name
+    action: ActionType                # ALLOW, DENY, or ELICIT
+    params: Tuple[str, ...]          # Policy parameters
+    expiry: Optional[datetime]        # Expiration time
+```
+
+## Development
+
+### Running Tests
+
+```bash
+pytest
+```
+
+### Building
+
+```bash
+python -m build
+```
+
+### Version Bump
+
+```bash
+bump2version patch  # or minor, major
+git push --tags
+```
 
 ## Contributing
 
-We welcome contributions! Please see our `CONTRIBUTING.md` for guidelines on how to contribute to this project.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## Security Considerations
+
+- Store `secret_key` securely (use environment variables or secrets management)
+- Use HTTPS in production to protect macaroon transmission
+- Set appropriate `elicit_expiry` values for your use case
+- Review and audit custom policy enforcers for security vulnerabilities
+- Consider implementing additional caveats for IP restrictions, time windows, etc.
 
 ## License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+MIT License - see [LICENSE](LICENSE) file.
+
+## Citation
+
+```bibtex
+@software{mcp_macaroon_middleware,
+  author = {Indresh Pradeepkumar, Neil Grover, Ravi Gadgil},
+  title = {MCP Macaroon Middleware},
+  year = {2025},
+  url = {https://github.com/indreshp135/CSE-227-OPENMCP}
+}
+```
+
+## Links
+
+- **GitHub**: https://github.com/indreshp135/CSE-227-OPENMCP
+- **PyPI**: https://pypi.org/project/mcp-macaroon-middleware/
+- **Issues**: https://github.com/indreshp135/CSE-227-OPENMCP/issues
+- **FastMCP**: https://github.com/jlowin/fastmcp
+- **Macaroons Paper**: https://research.google/pubs/pub41892/

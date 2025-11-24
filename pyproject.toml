@@ -7,6 +7,8 @@ name = "mcp_macaroon_middleware"
 version = "1.1.0"
 authors = [
   { name="Indresh", email="ipradeepkumar@ucsd.edu" },
+  { name="Neil Grover", email="ngrover@ucsd.edu" },
+  { name="Ravi Gadgil", email="rgadgil@ucsd.edu" },
 ]
 description = "A production-grade, policy-as-code middleware for FastMCP servers that uses macaroons for fine-grained, dynamic, and capability-based authorization."
 readme = "README.md"
