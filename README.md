@@ -16,10 +16,16 @@ This middleware allows you to enforce policies on tool calls, both before and af
 
 ## Installation
 
-Assuming this middleware is packaged and available on a package repository like PyPI:
+To install the middleware from your local checkout, run the following command from the root of the project:
 
 ```bash
-pip install mcp-macaroon-middleware
+pip install .
+```
+
+For development, you can install the package in editable mode:
+
+```bash
+pip install -e .
 ```
 
 ## Configuration
@@ -31,6 +37,8 @@ Create a `policies.yaml` file (or any name you prefer) with a `config` and `poli
 ```yaml
 # config/policies.yaml
 config:
+  # Secret key for signing macaroons. It's recommended to use an environment variable for this.
+  secret_key: "this_is_a_very_secret_key"
   # Default expiry for elicited permissions in seconds (e.g., 1 hour)
   elicit_expiry: 3600
 
@@ -72,19 +80,19 @@ The caveat format is as follows:
 
 ## Usage
 
-Here's how to integrate the `MacaroonMiddleware` into your `FastMCP` server.
+Here's how to integrate the `MacaroonMiddleware` into your `FastMCP` server. The middleware comes with built-in enforcers for common policies like `tool_access`, `field_access`, and `allow_attempts`.
 
 ### 1. Add the Middleware to your Server
 
-In your main server file, import and add the `MacaroonMiddleware`.
+In your main server file (e.g., `examples/server.py`), import and add the `MacaroonMiddleware`.
 
 ```python
-# server.py
+# examples/server.py
 import os
 import logging
 from fastmcp import FastMCP, Context
 from fastmcp.server.auth.providers.github import GitHubProvider
-from mcp_macaroon_middleware import MacaroonMiddleware, policy_enforcer, PolicyViolationError
+from mcp_macaroon_middleware import MacaroonMiddleware
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -115,37 +123,12 @@ def create_mcp_server():
 # ... (rest of your server code)
 ```
 
-### 2. Create Policy Enforcement Functions
-
-Use the `@policy_enforcer` decorator to create functions that enforce your policies. The middleware will automatically discover and use these functions based on the `tool_name` in the caveat.
-
-```python
-# server.py (continued)
-
-@policy_enforcer("get_user_profile")
-def enforce_user_profile_policy(caveat, context, result):
-    """
-    Enforces policies on the 'get_user_profile' tool result.
-    """
-    # This function is called for the 'af' (after) phase
-    if caveat.action == "redact" and result and caveat.field_path in result:
-        logger.info(f"Redacting field: {caveat.field_path}")
-        result[caveat.field_path] = "REDACTED"
-    elif caveat.action == "allow":
-        # 'allow' is a pass-through action in this example
-        pass
-    else:
-        raise PolicyViolationError(f"Action '{caveat.action}' is not supported.")
-
-# ...
-```
-
-### 3. Define Your Tools
+### 2. Define Your Tools
 
 Create your tools as you normally would with `FastMCP`.
 
 ```python
-# server.py (continued)
+# examples/server.py (continued)
 
 def add_tools(mcp: FastMCP):
     @mcp.tool
@@ -165,7 +148,7 @@ if __name__ == "__main__":
     mcp.run(transport="http", port=9000)
 ```
 
-When a user calls the `get_user_profile` tool, the `MacaroonMiddleware` will intercept the result. Based on the `policies.yaml` configuration, it will call the `enforce_user_profile_policy` function, which will redact the `email` field before returning the result to the user.
+When a user calls a tool, the `MacaroonMiddleware` will intercept the call and enforce the policies defined in your `policies.yaml` file using the built-in enforcers. For example, if you have a policy to redact the `email` field, the middleware will do so before returning the result to the user.
 
 ## License
 

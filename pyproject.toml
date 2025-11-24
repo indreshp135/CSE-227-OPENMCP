@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp_macaroon_middleware"
+version = "1.0.0"
+authors = [
+  { name="Indresh", email="ipradeepkumar@ucsd.edu" },
+]
+description = "A production-grade, policy-as-code middleware for FastMCP servers that uses macaroons for fine-grained, dynamic, and capability-based authorization."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "pymacaroons",
+    "pyyaml",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/google/gemini-cli"
+"Bug Tracker" = "https://github.com/google/gemini-cli/issues"

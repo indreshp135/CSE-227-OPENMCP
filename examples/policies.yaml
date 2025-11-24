@@ -1,0 +1,11 @@
+config:
+  elicit_expiry: 30
+  secret_key: "this_is_a_secret_key"
+
+policies:
+  - "bf:read_emails:tool_access:allow"
+  - "bf:read_emails:allow_attempts:allow:5"
+  - "af:read_emails:field_access:allow:subject"
+  - "af:read_emails:field_access:deny:body"
+  - "af:read_emails:field_access:deny:attachments"
+  - "af:read_emails:field_access:elicit:timestamp"

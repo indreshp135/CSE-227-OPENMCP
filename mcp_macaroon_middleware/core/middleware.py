@@ -10,8 +10,6 @@ from ..validators.caveat_validator import CaveatValidator
 from ..config.loader import load_config_from_yaml
 
 logger = logging.getLogger(__name__)
-SECRET_KEY = os.environ.get("MACAROON_SECRET_KEY", "this_is_a_secret_key")
-
 class MacaroonMiddleware(Middleware):
     """
     A production-grade middleware for macaroon-based policy enforcement.
@@ -21,10 +19,11 @@ class MacaroonMiddleware(Middleware):
         logger.info("Initializing MacaroonMiddleware.")
         config = load_config_from_yaml(config_path)
         self._initial_caveats = config["policies"]
+        self._secret_key = config.get("config", {}).get("secret_key", os.environ.get("MACAROON_SECRET_KEY", "this_is_a_secret_key"))
         self._policy_engine = PolicyEngine(
             CaveatValidator(),
             elicit_expiry=config.get("config", {}).get("elicit_expiry", 3600),
-            secret_key=SECRET_KEY
+            secret_key=self._secret_key
         )
         self._token_to_macaroon = {}  # In-memory cache
         logger.info(f"MacaroonMiddleware initialized with {len(self._initial_caveats)} initial caveats.")
@@ -102,7 +101,7 @@ class MacaroonMiddleware(Middleware):
         macaroon = Macaroon(
             location="mcp_server",
             identifier=f"user_{user_id}",
-            key=SECRET_KEY,
+            key=self._secret_key,
         )
         
         for caveat_str in self._initial_caveats:

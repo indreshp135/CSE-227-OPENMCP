@@ -19,6 +19,7 @@ from .models.caveat import ExecutionPhase, Caveat, ActionType
 
 # Import policies
 from .policies.decorators import policy_enforcer
+from .policies import default_enforcers
 
 # Import exceptions
 from .exceptions import MacaroonMiddlewareError, PolicyViolationError
