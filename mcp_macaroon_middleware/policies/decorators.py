@@ -1,5 +1,7 @@
 import logging
 from typing import Callable, Dict
+from typing import List
+from ..models import Caveat
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +18,7 @@ def policy_enforcer(policy_name: str):
         return func
     return decorator
 
-def get_enforcer(policy_name: str) -> Callable:
+def get_enforcer(policy_name: str) -> Callable[..., List[Caveat]]:
     """
     Retrieves a registered policy enforcer for a given policy name.
     """

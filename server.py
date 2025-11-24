@@ -3,6 +3,8 @@ from fastmcp import FastMCP, Context
 from fastmcp.tools.tool import ToolResult
 from fastmcp.server.auth.providers.github import GitHubProvider
 from fastmcp.server.dependencies import get_access_token
+from pymacaroons import Macaroon
+from typing import List
 from mcp_macaroon_middleware import MacaroonMiddleware, policy_enforcer, PolicyViolationError, update_result_with_dicts, extract_content_to_dicts, Caveat, ActionType
 import os
 
@@ -14,16 +16,18 @@ logger = logging.getLogger(__name__)
 
 # server.py - Updated policy enforcers
 @policy_enforcer("tool_access")
-def enforce_tool_access_policy(caveat: Caveat, context: Context, result: ToolResult):
+def enforce_tool_access_policy(caveat: Caveat, context: Context, result: ToolResult) -> List[Caveat]:
     """Enforces tool-level access control."""
     logger.info(f"Enforcing policy for {caveat.tool_name}: {caveat.raw}")
     if caveat.action == ActionType.ALLOW.value:
         pass
     elif caveat.action == ActionType.DENY.value:
         raise PolicyViolationError(f"Access to tool '{caveat.tool_name}' is denied")
+    
+    return []
 
 @policy_enforcer("email_fields")
-def enforce_email_fields_policy(caveat: Caveat, context: Context, result: ToolResult, *fields):
+def enforce_email_fields_policy(caveat: Caveat, context: Context, result: ToolResult, field) -> List[Caveat]:
     """Enforces field-level policies on read_emails."""
     logger.info(f"Enforcing policy for read_emails: {caveat.raw}")
     print
@@ -41,31 +45,50 @@ def enforce_email_fields_policy(caveat: Caveat, context: Context, result: ToolRe
             # 2. Modify data (Redact specified fields)
             modifications_made = False
             for email in tool_result_dict:
-                for field in fields:
-                    # Check if field exists and isn't already redacted to avoid redundant work
-                    if field in email and email[field] != "REDACTED":
-                        email[field] = "REDACTED"
-                        modifications_made = True
+                # Check if field exists and isn't already redacted to avoid redundant work
+                if field in email and email[field] != "REDACTED":
+                    email[field] = "REDACTED"
+                    modifications_made = True
             
             # 3. Re-serialize and update result ONLY if changes were made
             if modifications_made:
                 # Serialize the modified Python list back to a JSON string
                 update_result_with_dicts(result, tool_result_dict)
-                logger.debug(f"Successfully redacted fields: {fields}")
+                logger.debug(f"Successfully redacted field: {field}")
             else:
                 logger.debug("Policy enforced, but no requested fields were present to redact.")
 
         except Exception as e:
             logger.error(f"Error executing field redaction policy: {e}", exc_info=True)
-            # Depending on security requirements, you might want to raise here 
-            # to fail closed if redaction fails. For now, we log the error.
-            # raise PolicyViolationError("Internal error during policy enforcement") from e
-
+            
     elif caveat.action == ActionType.ALLOW:
         logger.debug("Allow action specified; no redaction performed.")
         pass
     else:
         logger.warning(f"Unknown action '{caveat.action}' specified; no changes made.")
+    
+    return []
+
+@policy_enforcer("allow_attempts")
+def enforce_allow_attempts_policy(caveat: Caveat, context: Context, result: ToolResult, attempts) -> List[Caveat]:
+    """Enforces the attempts policy for a tool."""
+    logger.info(f"Enforcing attempts policy for {caveat.tool_name}: {caveat.raw}")
+    print(attempts)
+    attempts = int(attempts) if attempts else 0
+    try:
+        if attempts <= 0:
+            raise PolicyViolationError(f"No attempts left for tool '{caveat.tool_name}'.")
+        else:
+            logger.info(f"Attempts left for tool '{caveat.tool_name}': {attempts}")
+            # Decrement attempts by adding a new caveat with decremented count
+            new_count = attempts - 1
+            return [Caveat.from_string(
+                f"bf:{caveat.tool_name}:allow_attempts:allow:{new_count}"
+            )]
+    except (ValueError, IndexError):
+        logger.warning(f"Invalid caveat format: {caveat.raw}")
+
+    return []
 # --- Example Usage ---
 
 def create_mcp_server_with_macaroon_auth():
