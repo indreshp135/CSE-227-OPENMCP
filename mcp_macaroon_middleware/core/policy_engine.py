@@ -121,18 +121,19 @@ class PolicyEngine:
         allow_caveat_str = base_caveat_str.replace(ActionType.ELICIT.value, ActionType.ALLOW.value)
         deny_caveat_str = base_caveat_str.replace(ActionType.ELICIT.value, ActionType.DENY.value)
 
+        has_valid_caveat = False
         for c in macaroon.caveats:
             if c.caveat_id.startswith(allow_caveat_str) or c.caveat_id.startswith(deny_caveat_str):
                 try:
                     existing_caveat = Caveat.from_string(c.caveat_id)
                     if existing_caveat.expiry and datetime.now(timezone.utc) > existing_caveat.expiry:
                         logger.debug(f"Existing caveat '{c.caveat_id}' is expired. Re-eliciting permission.")
-                        return False
+                        continue
                     logger.debug(f"Valid allow or deny caveat exists for '{caveat.raw}'.")
-                    return True
+                    has_valid_caveat = True
                 except ValueError:
                     logger.warning(f"Malformed caveat '{c.caveat_id}' encountered. Ignoring.")
-        return False
+        return has_valid_caveat
 
     async def _elicit_permission(self, caveat: Caveat, context: Context) -> Caveat:
         """Elicit permission from the user."""
@@ -151,12 +152,16 @@ class PolicyEngine:
     def _get_applicable_caveats(
         self, macaroon: Macaroon, tool_name: str, phase: ExecutionPhase
     ) -> List[Caveat]:
-        """Parses and filters caveats that are applicable to the current context."""
+        """Parses and filters caveats that are applicable to the current context and not expired."""
         applicable_caveats = []
         for caveat_obj in macaroon.caveats:
             try:
                 caveat = Caveat.from_string(caveat_obj.caveat_id)
-                if caveat.tool_name == tool_name and caveat.execution_phase == phase:
+                if (
+                    caveat.tool_name == tool_name 
+                    and caveat.execution_phase == phase
+                    and (not caveat.expiry or datetime.now(timezone.utc) <= caveat.expiry)
+                ):
                     applicable_caveats.append(caveat)
                     logger.debug(f"Added applicable caveat: {caveat.raw}")
             except ValueError:
