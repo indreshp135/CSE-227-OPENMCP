@@ -22,5 +22,5 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/google/gemini-cli"
-"Bug Tracker" = "https://github.com/google/gemini-cli/issues"
+"Homepage" = "https://github.com/indreshp135/MCP-MIDDLEWARE"
+"Bug Tracker" = "https://github.com/indreshp135/MCP-MIDDLEWARE/issues"
