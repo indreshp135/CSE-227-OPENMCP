@@ -1,6 +1,7 @@
 # MCP Macaroon Middleware
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI - Version](https://img.shields.io/pypi/v/mcp-macaroon-middleware)](https://pypi.org/project/mcp-macaroon-middleware/)
 
 A production-grade, policy-as-code middleware for `FastMCP` servers that uses macaroons for fine-grained, dynamic, and capability-based authorization.
 
@@ -30,7 +31,7 @@ pip install .
 For development, you can install the package in editable mode:
 
 ```bash
-pip install -e .
+pip install -e '.[dev]'
 ```
 
 ## Configuration
@@ -189,6 +190,38 @@ To run the example server:
     ```bash
     python examples/server.py
     ```
+
+## Development
+
+### Running Tests
+
+To run the unit tests, first ensure you have installed the development dependencies:
+
+```bash
+pip install -e '.[dev]'
+```
+
+Then, run pytest from the project root:
+
+```bash
+pytest
+```
+
+### Versioning and Releases
+
+This project uses `bump2version` for managing versions and creating releases. To update the version and create a new Git tag, use the following commands:
+
+```bash
+bump2version [patch|minor|major]
+```
+
+For example, to increment the patch version:
+
+```bash
+bump2version patch
+```
+
+This will update the `version` in `pyproject.toml`, commit the change, and create a Git tag. Pushing this tag to GitHub will trigger the CI/CD pipeline to build and publish the package to PyPI.
 
 ## Contributing
 

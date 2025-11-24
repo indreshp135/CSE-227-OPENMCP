@@ -19,6 +19,15 @@ classifiers = [
 dependencies = [
     "pymacaroons",
     "pyyaml",
+    "fastmcp",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "httpx",
+    "bump2version",
 ]
 
 [project.urls]
