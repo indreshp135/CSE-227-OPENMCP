@@ -47,6 +47,12 @@ class MacaroonAuthMiddleware(Middleware):
 		macaroon.add_first_party_caveat(caveat_user)
 		logger.debug(f"Added base caveats: [{caveat_service}, {caveat_user}] to macaroon id={identifier}")
 		
+		# Add initial attempts caveat
+		initial_attempts = 5
+		caveat_attempts = f"attempts_remaining = {initial_attempts}"
+		macaroon.add_first_party_caveat(caveat_attempts)
+		logger.debug(f"Added attempts caveat: {caveat_attempts} to macaroon id={identifier}")
+
 		logger.info(f"Created base macaroon for user: {user_id}, service: {service}")
 		return macaroon.serialize()
 	
@@ -102,6 +108,36 @@ class MacaroonAuthMiddleware(Middleware):
 					allowed_functions.add(function_name)
 		logger.info("Allowed functions: %s", allowed_functions)
 		return allowed_functions
+	
+	def get_attempts_remaining(self, macaroon: Macaroon) -> int:
+		"""Return the most recent attempts_remaining value from caveats."""
+		attempts = None
+		for cav in macaroon.caveats:
+			if cav.caveat_id.startswith("attempts_remaining = "):
+				try:
+					attempts = int(cav.caveat_id.split("=", 1)[1].strip())
+				except ValueError:
+					pass
+		return attempts
+
+	def decrement_attempts(self, macaroon: Macaroon) -> Macaroon:
+		"""Decrease attempts_remaining by 1 and add a new caveat."""
+		attempts = self.get_attempts_remaining(macaroon)
+
+		if attempts is None:
+			raise Exception("Macaroon missing attempts_remaining caveat")
+
+		new_attempts = attempts - 1
+		caveat = f"attempts_remaining = {new_attempts}"
+
+		macaroon.add_first_party_caveat(caveat)
+		logger.info(f"Attempts decremented: {attempts} -> {new_attempts}")
+
+		if new_attempts <= 0:
+			raise Exception("Maximum number of attempts reached")
+
+		return macaroon
+
 	def verify_macaroon(self, macaroon: Macaroon, secret_key: str) -> bool:
 		"""Verify macaroon integrity and base requirements."""
 		logger.debug("Verifying macaroon integrity and caveats")
@@ -117,6 +153,8 @@ class MacaroonAuthMiddleware(Middleware):
 				elif caveat_id.startswith("allowed_field = "):
 					v.satisfy_exact(caveat_id)
 				elif caveat_id.startswith("allowed_function = "):
+					v.satisfy_exact(caveat_id)
+				elif caveat_id.startswith("attempts_remaining = "):
 					v.satisfy_exact(caveat_id)
 			
 			v.verify(macaroon, secret_key)
@@ -162,6 +200,27 @@ class MacaroonAuthMiddleware(Middleware):
 		if not self.verify_macaroon(macaroon, SECRET_KEY):
 			logger.error("Macaroon verification failed - rejecting request")
 			raise Exception("Invalid macaroon or missing required caveats")
+		
+		# 3.5: Decrement attempts
+		try:
+			macaroon = self.decrement_attempts(macaroon)
+			updated_serialized = macaroon.serialize()
+			self.token_to_macaroon[token_id] = updated_serialized
+			context.fastmcp_context.set_state("macaroon", updated_serialized)
+		except Exception as e:
+			raise Exception("No attempts remaining") from e
+		
+		attempts_remaining = self.get_attempts_remaining(macaroon)
+
+		# Notify user of remaining attempts
+		try:
+			await context.fastmcp_context.elicit(
+				f"You have **{attempts_remaining} attempts** remaining.",
+				response_type=None
+			)
+		except Exception as e:
+			logger.warning(f"Failed to send attempt notification: {e}")
+
 		allowed_functions = self.get_allowed_functions(macaroon)
 		# Safe extractor for tool name from various MiddlewareContext shapes
 		def _extract_tool_name(ctx) -> Optional[str]:
