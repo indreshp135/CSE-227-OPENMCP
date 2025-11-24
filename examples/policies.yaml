@@ -4,7 +4,7 @@ config:
 
 policies:
   - "bf:read_emails:tool_access:allow"
-  - "bf:read_emails:allow_attempts:allow:5"
+  - "bf:read_emails:allow_attempts:allow:2"
   - "af:read_emails:field_access:allow:subject"
   - "af:read_emails:field_access:deny:body"
   - "af:read_emails:field_access:deny:attachments"

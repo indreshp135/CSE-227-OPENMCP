@@ -59,7 +59,7 @@ def enforce_field_access_policy(caveat: Caveat, context: Context, result: ToolRe
     return []
 
 @policy_enforcer("allow_attempts")
-def enforce_allow_attempts_policy(caveat: Caveat, context: Context, result: ToolResult, macaroon: Macaroon, *args) -> List[Caveat]:
+def enforce_allow_attempts_policy(caveat: Caveat, context: Context, result: ToolResult, macaroon: Macaroon, remaining_attempts) -> List[Caveat]:
     """Enforces the attempts policy for a tool."""
     logger.info(f"Enforcing attempts policy for {caveat.tool_name}: {caveat.raw}")
 
@@ -83,7 +83,7 @@ def enforce_allow_attempts_policy(caveat: Caveat, context: Context, result: Tool
     if lowest_attempt == 0:
         raise PolicyViolationError(f"No more attempts left for tool '{caveat.tool_name}'.")
     
-    if lowest_attempt > 0:
+    if lowest_attempt == int(remaining_attempts):
         new_count = lowest_attempt - 1
         new_caveat_str = f"bf:{caveat.tool_name}:allow_attempts:allow:{new_count}"
         if not any(c.caveat_id == new_caveat_str for c in macaroon.caveats):
