@@ -10,6 +10,12 @@ class ExecutionPhase(Enum):
     """Enum for the execution phase of a policy."""
     BEFORE = "bf"
     AFTER = "af"
+    
+class ActionType(Enum):
+    """Enum for the action type of a policy."""
+    ALLOW = "allow"
+    DENY = "deny"
+    ELICIT = "elicit"
 
 @dataclass
 class Caveat:
@@ -18,7 +24,7 @@ class Caveat:
     execution_phase: ExecutionPhase
     tool_name: str
     policy_name: str
-    action: str
+    action: ActionType
     params: Tuple[str, ...]
 
     @classmethod

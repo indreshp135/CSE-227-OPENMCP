@@ -1,12 +1,10 @@
 import logging
-import json
-from typing import Dict, Any, List
 from fastmcp import FastMCP, Context
+from fastmcp.tools.tool import ToolResult
 from fastmcp.server.auth.providers.github import GitHubProvider
 from fastmcp.server.dependencies import get_access_token
-from mcp_macaroon_middleware import MacaroonMiddleware, policy_enforcer, PolicyViolationError, update_result_with_dicts, extract_content_to_dicts
+from mcp_macaroon_middleware import MacaroonMiddleware, policy_enforcer, PolicyViolationError, update_result_with_dicts, extract_content_to_dicts, Caveat, ActionType
 import os
-from mcp.types import TextContent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -15,33 +13,24 @@ logger = logging.getLogger(__name__)
 # --- Policy Enforcement ---
 
 # server.py - Updated policy enforcers
-@policy_enforcer("user_profile_fields")
-def enforce_user_profile_policy(caveat, context, result, *fields):
-    """Enforces field-level policies on get_user_profile."""
-    logger.info(f"Enforcing policy for get_user_profile: {caveat.raw}")
-    if caveat.action == "redact" and result:
-        for field in fields:
-            if field in result:
-                result[field] = "REDACTED"
-    elif caveat.action == "allow":
-        pass
-
 @policy_enforcer("tool_access")
-def enforce_tool_access_policy(caveat, context, result):
+def enforce_tool_access_policy(caveat: Caveat, context: Context, result: ToolResult):
     """Enforces tool-level access control."""
     logger.info(f"Enforcing policy for {caveat.tool_name}: {caveat.raw}")
-    if caveat.action == "allow":
+    if caveat.action == ActionType.ALLOW.value:
         pass
-    elif caveat.action == "deny":
+    elif caveat.action == ActionType.DENY.value:
         raise PolicyViolationError(f"Access to tool '{caveat.tool_name}' is denied")
 
 @policy_enforcer("email_fields")
-def enforce_email_fields_policy(caveat, context, result, *fields):
+def enforce_email_fields_policy(caveat: Caveat, context: Context, result: ToolResult, *fields):
     """Enforces field-level policies on read_emails."""
     logger.info(f"Enforcing policy for read_emails: {caveat.raw}")
+    print(ActionType.DENY, caveat.action, result, result.content)
     
     # Only proceed if the action is deny and there is a result to modify
-    if caveat.action == "deny" and result and result.content:
+    if caveat.action == ActionType.DENY.value and result and result.content:
+        print(f"Enforcing email fields policy: {caveat.raw}")
         try:
             # 1. Extract current data as Python objects using the helper
             tool_result_dict = extract_content_to_dicts(result)
@@ -73,8 +62,11 @@ def enforce_email_fields_policy(caveat, context, result, *fields):
             # to fail closed if redaction fails. For now, we log the error.
             # raise PolicyViolationError("Internal error during policy enforcement") from e
 
-    elif caveat.action == "allow":
+    elif caveat.action == ActionType.ALLOW.value:
+        print("Allow action specified; no redaction performed.")
         pass
+    else:
+        print(f"Unknown action '{caveat.action}' specified; no changes made.")
 # --- Example Usage ---
 
 def create_mcp_server_with_macaroon_auth():
