@@ -4,9 +4,6 @@ MCP Macaroon Middleware - A production-grade policy enforcement layer for MCP.
 
 import logging
 
-# Package version
-__version__ = "1.0.0"
-
 # Configure logging for the package
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
