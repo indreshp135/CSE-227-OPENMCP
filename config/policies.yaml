@@ -1,0 +1,6 @@
+policies:
+  - "bf:read_emails:*:allow:2026-01-01T00:00:00Z"
+  - "af:get_user_profile:user_id:allow:2026-01-01T00:00:00Z"
+  - "af:get_user_profile:login:allow:2026-01-01T00:00:00Z"
+  - "af:get_user_profile:name:allow:2026-01-01T00:00:00Z"
+  - "af:get_user_profile:email:redact:2026-01-01T00:00:00Z"
