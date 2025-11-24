@@ -1,6 +1,6 @@
 import logging
 import yaml
-from typing import List, Dict, Any
+from typing import Dict, Any
 from ..exceptions import ConfigurationError
 
 logger = logging.getLogger(__name__)

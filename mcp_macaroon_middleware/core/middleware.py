@@ -4,7 +4,7 @@ from fastmcp.server.middleware import Middleware
 from fastmcp.server.dependencies import get_access_token
 from fastmcp.server.middleware.middleware import MiddlewareContext, mt
 from pymacaroons import Macaroon
-from ..exceptions import MacaroonMiddlewareError, DeserializationError, PolicyViolationError
+from ..exceptions import MacaroonMiddlewareError, DeserializationError
 from .policy_engine import PolicyEngine, ExecutionPhase
 from ..validators.caveat_validator import CaveatValidator
 from ..config.loader import load_config_from_yaml
