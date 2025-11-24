@@ -1,9 +1,0 @@
-{
-	"servers": {
-		"Emails": {
-			"url": "http://localhost:9001/mcp",
-			"type": "http"
-		}
-	},
-	"inputs": []
-}
