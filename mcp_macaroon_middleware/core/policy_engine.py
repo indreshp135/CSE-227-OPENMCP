@@ -27,16 +27,6 @@ class PolicyEngine:
     ):
         """
         Enforces policies for a given tool call and execution phase.
-
-        Args:
-            macaroon: The macaroon to enforce.
-            tool_name: The name of the tool being called.
-            phase: The execution phase (before or after).
-            context: The tool call context.
-            result: The result of the tool call (for 'after' phase).
-
-        Raises:
-            PolicyViolationError: If a policy is violated.
         """
         logger.debug(f"Enforcing policies for tool '{tool_name}' in phase '{phase.value}'.")
         caveats = self._get_applicable_caveats(macaroon, tool_name, phase)
@@ -47,19 +37,18 @@ class PolicyEngine:
             try:
                 self._validator.validate(caveat)
                 logger.debug(f"Caveat '{caveat.raw}' validated successfully.")
-                enforcer = get_enforcer(caveat.tool_name)
+                enforcer = get_enforcer(caveat.policy_name)
                 if enforcer:
-                    logger.debug(f"Executing enforcer for tool '{caveat.tool_name}' with caveat: {caveat.raw}")
+                    logger.debug(f"Executing enforcer for policy '{caveat.policy_name}' with caveat: {caveat.raw}")
                     enforcer(
                         caveat=caveat,
                         context=context.fastmcp_context if context else None,
                         result=result,
+                        *caveat.params
                     )
-                    logger.debug(f"Enforcer for '{caveat.tool_name}' executed successfully.")
+                    logger.debug(f"Enforcer for '{caveat.policy_name}' executed successfully.")
                 else:
-                    # If no enforcer is registered, the caveat is considered to have no effect.
-                    # This allows for a default-allow policy for unrecognized caveats.
-                    logger.warning(f"No enforcer registered for tool '{caveat.tool_name}'. Skipping caveat: {caveat.raw}")
+                    logger.warning(f"No enforcer registered for policy '{caveat.policy_name}'. Skipping caveat: {caveat.raw}")
             except (CaveatValidationError, PolicyViolationError) as e:
                 logger.error(f"Policy enforcement failed for caveat '{caveat.raw}': {e}")
                 raise e

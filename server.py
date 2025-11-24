@@ -13,38 +13,26 @@ logger = logging.getLogger(__name__)
 
 # --- Policy Enforcement ---
 
-@policy_enforcer("get_user_profile")
-def enforce_user_profile_policy(caveat, context: Context, result):
-    """
-    Enforces policies on the get_user_profile tool result.
-    This function will be called by the PolicyEngine.
-    """
+# server.py - Updated policy enforcers
+@policy_enforcer("user_profile_fields")
+def enforce_user_profile_policy(caveat, context, result, *fields):
+    """Enforces field-level policies on get_user_profile."""
     logger.info(f"Enforcing policy for get_user_profile: {caveat.raw}")
-    if caveat.action == "redact" and result and caveat.field_path in result:
-        logger.info(f"Redacting field '{caveat.field_path}' in get_user_profile result.")
-        result[caveat.field_path] = "REDACTED"
+    if caveat.action == "redact" and result:
+        for field in fields:
+            if field in result:
+                result[field] = "REDACTED"
     elif caveat.action == "allow":
-        logger.debug(f"Allowing field '{caveat.field_path}' in get_user_profile result.")
-        pass  # Field is allowed, do nothing
-    else:
-        raise PolicyViolationError(f"Action '{caveat.action}' not supported for '{caveat.tool_name}'")
+        pass
 
-@policy_enforcer("read_emails")
-def enforce_read_emails_policy(caveat, context: Context, result):
-    """
-    Enforces policies on the read_emails tool result.
-    This function will be called by the PolicyEngine.
-    """
-    logger.info(f"Enforcing policy for read_emails: {caveat.raw}")
+@policy_enforcer("tool_access")
+def enforce_tool_access_policy(caveat, context, result):
+    """Enforces tool-level access control."""
+    logger.info(f"Enforcing policy for {caveat.tool_name}: {caveat.raw}")
     if caveat.action == "allow":
-        logger.debug(f"Allowing read_emails tool to be called.")
-        pass  # Tool call is allowed, do nothing
+        pass
     elif caveat.action == "deny":
-        logger.warning(f"Denying read_emails tool to be called due to policy: {caveat.raw}")
-        raise PolicyViolationError(f"Access to tool '{caveat.tool_name}' is denied by policy.")
-    else:
-        raise PolicyViolationError(f"Action '{caveat.action}' not supported for '{caveat.tool_name}'")
-
+        raise PolicyViolationError(f"Access to tool '{caveat.tool_name}' is denied")
 
 # --- Example Usage ---
 
@@ -55,7 +43,7 @@ def create_mcp_server_with_macaroon_auth():
     # Load GitHub OAuth credentials
     GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID")
     GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET")
-    BASE_URL = os.environ.get("BASE_URL", "http://localhost:9000")
+    BASE_URL = os.environ.get("BASE_URL", "http://localhost:9001")
 
     if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET:
         logger.error("GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET must be set")
@@ -132,8 +120,8 @@ if __name__ == "__main__":
         add_gmail_tools(mcp)
 
         logger.info("Starting MCP server with Macaroon authentication...")
-        logger.info("GitHub OAuth callback: http://localhost:9000/auth/callback")
-        mcp.run(transport="http", port=9000, log_level="debug")
+        logger.info("GitHub OAuth callback: http://localhost:9001/auth/callback")
+        mcp.run(transport="http", port=9001, log_level="debug")
     except Exception as e:
         logger.exception("Failed to start MCP server: %s", e)
         raise
