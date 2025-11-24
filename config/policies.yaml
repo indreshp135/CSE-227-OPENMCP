@@ -3,8 +3,6 @@ config:
 
 policies:
   - "bf:read_emails:tool_access:allow"
-  - "af:get_user_profile:user_profile_fields:allow:user_id:login:name"
-  - "af:get_user_profile:user_profile_fields:redact:email"
   - "af:read_emails:email_fields:allow:subject"
   - "af:read_emails:email_fields:deny:body"
   - "af:read_emails:email_fields:deny:attachments"

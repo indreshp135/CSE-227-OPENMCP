@@ -54,6 +54,7 @@ class MacaroonMiddleware(Middleware):
             tool_name=context.message.name,
             phase=ExecutionPhase.BEFORE,
             context=context.fastmcp_context,
+            user_id=user_id
         )
         self._token_to_macaroon[token_id] = macaroon.serialize()
         logger.debug(f"Pre-execution policies enforced and macaroon updated for tool: {context.message.name}")
@@ -104,9 +105,7 @@ class MacaroonMiddleware(Middleware):
             identifier=f"user_{user_id}",
             key=SECRET_KEY,
         )
-        macaroon.add_first_party_caveat(f"user_id = {user_id}")
-        logger.debug(f"Added base user_id caveat: user_id = {user_id}")
-
+        
         for caveat_str in self._initial_caveats:
             macaroon.add_first_party_caveat(caveat_str)
             logger.debug(f"Added initial caveat from config: {caveat_str}")
