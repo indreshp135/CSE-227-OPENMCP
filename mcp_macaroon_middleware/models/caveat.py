@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Tuple, Optional
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class Caveat:
             time_part = params_parts.pop()
             try:
                 expiry_str = time_part.split("<")[1]
-                expiry = datetime.strptime(expiry_str, '%Y%m%dT%H%M%SZ')
+                expiry = datetime.strptime(expiry_str, '%Y%m%dT%H%M%SZ').replace(tzinfo=timezone.utc)
             except (IndexError, ValueError) as e:
                 logger.warning(f"Invalid time format in caveat '{caveat_string}': {e}")
 

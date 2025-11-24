@@ -5,7 +5,7 @@ from ..models.caveat import Caveat, ExecutionPhase, ActionType
 from ..validators.caveat_validator import CaveatValidator
 from ..policies.decorators import get_enforcer
 from ..exceptions import PolicyViolationError, CaveatValidationError
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastmcp import Context
 from fastmcp.server.elicitation import AcceptedElicitation
 from fastmcp.tools.tool import ToolResult
@@ -27,26 +27,23 @@ class PolicyEngine:
         """Verify macaroon integrity and all its caveats."""
         logger.debug("Verifying macaroon integrity and caveats")
         verifier = Verifier()
-        verifier.satisfy_general(self._general_caveat_satisfier)
+        for caveat in macaroon.caveats:
+            try:
+                caveat_obj = Caveat.from_string(caveat.caveat_id)
+                self._validator.validate(caveat_obj)
+                verifier.satisfy_exact(caveat.caveat_id)
+            except CaveatValidationError as e:
+                logger.error(f"Caveat validation failed: {e}")
+                return False
+            except ValueError:
+                logger.warning(f"Skipping non-policy caveat: {caveat.caveat_id}")
         try:
             return verifier.verify(macaroon, self._secret_key)
         except Exception as e:
             logger.exception(f"Macaroon verification failed: {e}")
             return False
 
-    def _general_caveat_satisfier(self, caveat_str: str) -> bool:
-        """General satisfier for all caveats."""
-        try:
-            caveat = Caveat.from_string(caveat_str)
-            if caveat.expiry and datetime.utcnow() > caveat.expiry:
-                return False
-        except ValueError:
-            # Not a caveat this engine is responsible for, but that's ok.
-            # The verifier will still check for exact matches if this returns True.
-            pass
-        return True
-
-    def add_list_of_caveats(self, macaroon: Macaroon, caveat_strs: List[Caveat]):
+    def _add_list_of_caveats(self, macaroon: Macaroon, caveat_strs: List[Caveat]):
         """Adds a list of caveats to the macaroon."""
         for caveat_str in caveat_strs:
             macaroon.add_first_party_caveat(caveat_str.raw)
@@ -73,23 +70,25 @@ class PolicyEngine:
         logger.debug(f"Found {len(caveats)} applicable caveats for tool '{tool_name}' in phase '{phase.value}'.")
 
         final_caveats = await self._process_caveats(caveats, macaroon, context, result)
+        self._add_list_of_caveats(macaroon, final_caveats)
         return macaroon
 
     async def _process_caveats(
         self, caveats: List[Caveat], macaroon: Macaroon, context: Context, result: ToolResult
     ) -> List[Caveat]:
         """Process and enforce all applicable caveats."""
-        final_caveats = caveats.copy()
+        new_caveats = []
 
         for caveat in caveats:
             logger.debug(f"Processing caveat: {caveat.raw}")
             try:
                 if caveat.action == ActionType.ELICIT:
-                    new_caveats = await self._handle_elicit_action(macaroon, caveat, context)
+                    elicited_caveat = await self._handle_elicit_action(macaroon, caveat, context)
+                    if elicited_caveat:
+                        new_caveats.extend(self._execute_enforcer(elicited_caveat, context, result, macaroon))
+                        new_caveats.append(elicited_caveat)
                 else:
-                    new_caveats = self._execute_enforcer(caveat, context, result)
-
-                final_caveats.extend(new_caveats)
+                    new_caveats.extend(self._execute_enforcer(caveat, context, result, macaroon))
             except (CaveatValidationError, PolicyViolationError) as e:
                 logger.error(f"Policy enforcement failed for caveat '{caveat.raw}': {e}")
                 raise e
@@ -97,14 +96,14 @@ class PolicyEngine:
                 logger.exception(f"Unexpected error during policy enforcement for caveat '{caveat.raw}'.")
                 raise PolicyViolationError(f"Error enforcing caveat '{caveat.raw}': {e}")
 
-        return final_caveats
+        return new_caveats
 
-    def _execute_enforcer(self, caveat: Caveat, context: Context, result: ToolResult) -> List[Caveat]:
+    def _execute_enforcer(self, caveat: Caveat, context: Context, result: ToolResult, macaroon: Macaroon) -> List[Caveat]:
         """Execute the enforcer for a given caveat."""
         enforcer = get_enforcer(caveat.policy_name)
         if enforcer:
             logger.debug(f"Executing enforcer for policy '{caveat.policy_name}' with caveat: {caveat.raw}")
-            return enforcer(caveat, context, result, *caveat.params)
+            return enforcer(caveat, context, result, macaroon, *caveat.params)
         else:
             logger.warning(f"No enforcer registered for policy '{caveat.policy_name}'. Skipping caveat: {caveat.raw}")
             return []
@@ -126,7 +125,7 @@ class PolicyEngine:
             if c.caveat_id.startswith(allow_caveat_str) or c.caveat_id.startswith(deny_caveat_str):
                 try:
                     existing_caveat = Caveat.from_string(c.caveat_id)
-                    if existing_caveat.expiry and datetime.now() > existing_caveat.expiry:
+                    if existing_caveat.expiry and datetime.now(timezone.utc) > existing_caveat.expiry:
                         logger.debug(f"Existing caveat '{c.caveat_id}' is expired. Re-eliciting permission.")
                         return False
                     logger.debug(f"Valid allow or deny caveat exists for '{caveat.raw}'.")
@@ -135,19 +134,19 @@ class PolicyEngine:
                     logger.warning(f"Malformed caveat '{c.caveat_id}' encountered. Ignoring.")
         return False
 
-    async def _elicit_permission(self, caveat: Caveat, context: Context) -> List[Caveat]:
+    async def _elicit_permission(self, caveat: Caveat, context: Context) -> Caveat:
         """Elicit permission from the user."""
         resp = await context.elicit(
             f"Grant permission for: {caveat.raw}?",
             response_type=bool
         )
 
-        expiry = datetime.now() + timedelta(seconds=self._elicit_expiry)
-        time_str = f":time<{expiry.strftime('%Y%m%dT%H%M%SZ')}>"
+        expiry = datetime.now(timezone.utc) + timedelta(seconds=self._elicit_expiry)
+        time_str = f":time<{expiry.strftime('%Y%m%dT%H%M%SZ')}"
 
         if isinstance(resp, AcceptedElicitation) and resp.data:
-            return [Caveat.from_string(f"{caveat.raw.replace(ActionType.ELICIT.value, ActionType.ALLOW.value)}{time_str}")]
-        return [Caveat.from_string(f"{caveat.raw.replace(ActionType.ELICIT.value, ActionType.DENY.value)}{time_str}")]
+            return Caveat.from_string(f"{caveat.raw.replace(ActionType.ELICIT.value, ActionType.ALLOW.value)}{time_str}")
+        return Caveat.from_string(f"{caveat.raw.replace(ActionType.ELICIT.value, ActionType.DENY.value)}{time_str}")
 
     def _get_applicable_caveats(
         self, macaroon: Macaroon, tool_name: str, phase: ExecutionPhase

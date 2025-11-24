@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 # server.py - Updated policy enforcers
 @policy_enforcer("tool_access")
-def enforce_tool_access_policy(caveat: Caveat, context: Context, result: ToolResult) -> List[Caveat]:
+def enforce_tool_access_policy(caveat: Caveat, context: Context, result: ToolResult, macaroon: Macaroon) -> List[Caveat]:
     """Enforces tool-level access control."""
     logger.info(f"Enforcing policy for {caveat.tool_name}: {caveat.raw}")
     if caveat.action == ActionType.ALLOW.value:
@@ -27,7 +27,7 @@ def enforce_tool_access_policy(caveat: Caveat, context: Context, result: ToolRes
     return []
 
 @policy_enforcer("email_fields")
-def enforce_email_fields_policy(caveat: Caveat, context: Context, result: ToolResult, field) -> List[Caveat]:
+def enforce_email_fields_policy(caveat: Caveat, context: Context, result: ToolResult, macaroon: Macaroon, field) -> List[Caveat]:
     """Enforces field-level policies on read_emails."""
     logger.info(f"Enforcing policy for read_emails: {caveat.raw}")
     print
@@ -70,23 +70,37 @@ def enforce_email_fields_policy(caveat: Caveat, context: Context, result: ToolRe
     return []
 
 @policy_enforcer("allow_attempts")
-def enforce_allow_attempts_policy(caveat: Caveat, context: Context, result: ToolResult, attempts) -> List[Caveat]:
+def enforce_allow_attempts_policy(caveat: Caveat, context: Context, result: ToolResult, macaroon: Macaroon, attempt) -> List[Caveat]:
     """Enforces the attempts policy for a tool."""
     logger.info(f"Enforcing attempts policy for {caveat.tool_name}: {caveat.raw}")
-    print(attempts)
-    attempts = int(attempts) if attempts else 0
-    try:
-        if attempts <= 0:
-            raise PolicyViolationError(f"No attempts left for tool '{caveat.tool_name}'.")
-        else:
-            logger.info(f"Attempts left for tool '{caveat.tool_name}': {attempts}")
-            # Decrement attempts by adding a new caveat with decremented count
-            new_count = attempts - 1
-            return [Caveat.from_string(
-                f"bf:{caveat.tool_name}:allow_attempts:allow:{new_count}"
-            )]
-    except (ValueError, IndexError):
-        logger.warning(f"Invalid caveat format: {caveat.raw}")
+
+    # Find the lowest attempt count from all allow_attempts caveats
+    attempts_caveats = [
+        c for c in macaroon.caveats
+        if c.caveat_id.startswith(f"bf:{caveat.tool_name}:allow_attempts:allow:")
+    ]
+
+    if not attempts_caveats:
+        return []
+
+    lowest_attempt = -1
+    for c in attempts_caveats:
+        try:
+            count = int(c.caveat_id.split(":")[-1])
+            if lowest_attempt == -1 or count < lowest_attempt:
+                lowest_attempt = count
+        except (ValueError, IndexError):
+            continue
+    
+    if lowest_attempt == 0:
+        raise PolicyViolationError(f"No more attempts left for tool '{caveat.tool_name}'.")
+    
+    if lowest_attempt > 0 and attempt == lowest_attempt:
+        new_count = lowest_attempt - 1
+        # Avoid adding a duplicate caveat
+        new_caveat_str = f"bf:{caveat.tool_name}:allow_attempts:allow:{new_count}"
+        if not any(c.caveat_id == new_caveat_str for c in macaroon.caveats):
+            return [Caveat.from_string(new_caveat_str)]
 
     return []
 # --- Example Usage ---

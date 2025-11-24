@@ -1,5 +1,5 @@
 config:
-  elicit_expiry: 60
+  elicit_expiry: 30
 
 policies:
   - "bf:read_emails:tool_access:allow"
