@@ -26,11 +26,9 @@ def enforce_tool_access_policy(caveat: Caveat, context: Context, result: ToolRes
 def enforce_email_fields_policy(caveat: Caveat, context: Context, result: ToolResult, *fields):
     """Enforces field-level policies on read_emails."""
     logger.info(f"Enforcing policy for read_emails: {caveat.raw}")
-    print(ActionType.DENY, caveat.action, result, result.content)
     
     # Only proceed if the action is deny and there is a result to modify
-    if caveat.action == ActionType.DENY.value and result and result.content:
-        print(f"Enforcing email fields policy: {caveat.raw}")
+    if caveat.action == ActionType.DENY and result and result.content:
         try:
             # 1. Extract current data as Python objects using the helper
             tool_result_dict = extract_content_to_dicts(result)
@@ -62,11 +60,11 @@ def enforce_email_fields_policy(caveat: Caveat, context: Context, result: ToolRe
             # to fail closed if redaction fails. For now, we log the error.
             # raise PolicyViolationError("Internal error during policy enforcement") from e
 
-    elif caveat.action == ActionType.ALLOW.value:
-        print("Allow action specified; no redaction performed.")
+    elif caveat.action == ActionType.ALLOW:
+        logger.debug("Allow action specified; no redaction performed.")
         pass
     else:
-        print(f"Unknown action '{caveat.action}' specified; no changes made.")
+        logger.warning(f"Unknown action '{caveat.action}' specified; no changes made.")
 # --- Example Usage ---
 
 def create_mcp_server_with_macaroon_auth():
@@ -95,7 +93,7 @@ def create_mcp_server_with_macaroon_auth():
     logger.info("FastMCP instance created: 'Gmail with Macaroons'")
 
     # Add the new macaroon middleware
-    mcp.add_middleware(MacaroonMiddleware("config/policies.yaml"))
+    mcp.add_middleware(MacaroonMiddleware("config/policies.yaml", app=mcp))
     logger.info("Added MacaroonMiddleware to MCP")
     
     # Set logging level for mcp_macaroon_middleware to DEBUG

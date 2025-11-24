@@ -5,20 +5,20 @@ from ..exceptions import ConfigurationError
 
 logger = logging.getLogger(__name__)
 
-def load_policies_from_yaml(config_path: str) -> List[str]:
+def load_config_from_yaml(config_path: str) -> Dict[str, Any]:
     """
-    Loads initial macaroon caveat definitions from a YAML configuration file.
+    Loads macaroon caveat definitions and configuration from a YAML file.
 
     Args:
         config_path: The path to the YAML configuration file.
 
     Returns:
-        A list of caveat strings.
+        A dictionary with 'policies' and 'config' keys.
     """
-    logger.info(f"Attempting to load policies from YAML file: {config_path}")
+    logger.info(f"Attempting to load configuration from YAML file: {config_path}")
     try:
         with open(config_path, 'r') as file:
-            policies_data = yaml.safe_load(file)
+            data = yaml.safe_load(file)
         logger.debug(f"Successfully loaded YAML data from {config_path}.")
     except FileNotFoundError:
         logger.error(f"Policy file not found at: {config_path}")
@@ -27,10 +27,14 @@ def load_policies_from_yaml(config_path: str) -> List[str]:
         logger.error(f"Error parsing YAML file {config_path}: {e}")
         raise ConfigurationError(f"Error parsing YAML file: {e}")
 
-    if not isinstance(policies_data, dict) or "policies" not in policies_data:
-        logger.error(f"YAML file {config_path} must contain a 'policies' root element.")
-        raise ConfigurationError("YAML file must contain a 'policies' root element.")
+    if not isinstance(data, dict):
+        logger.error(f"YAML file {config_path} must be a dictionary.")
+        raise ConfigurationError("YAML file must be a dictionary.")
 
-    loaded_policies = policies_data.get("policies", [])
-    logger.info(f"Loaded {len(loaded_policies)} policies from {config_path}.")
-    return loaded_policies
+    config = {
+        "policies": data.get("policies", []),
+        "config": data.get("config", {})
+    }
+    
+    logger.info(f"Loaded {len(config['policies'])} policies and {len(config['config'])} config items from {config_path}.")
+    return config

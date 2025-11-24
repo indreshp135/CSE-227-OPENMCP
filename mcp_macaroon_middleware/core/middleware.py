@@ -2,11 +2,12 @@ import logging
 import os
 from fastmcp.server.middleware import Middleware
 from fastmcp.server.dependencies import get_access_token
+from fastmcp.server.middleware.middleware import MiddlewareContext, mt
 from pymacaroons import Macaroon
 from ..exceptions import MacaroonMiddlewareError, DeserializationError
 from .policy_engine import PolicyEngine, ExecutionPhase
 from ..validators.caveat_validator import CaveatValidator
-from ..config.loader import load_policies_from_yaml
+from ..config.loader import load_config_from_yaml
 
 logger = logging.getLogger(__name__)
 SECRET_KEY = os.environ.get("MACAROON_SECRET_KEY", "this_is_a_secret_key")
@@ -16,14 +17,20 @@ class MacaroonMiddleware(Middleware):
     A production-grade middleware for macaroon-based policy enforcement.
     """
 
-    def __init__(self, config_path: str):
+    def __init__(self, config_path: str, app: any):
         logger.info("Initializing MacaroonMiddleware.")
-        self._policy_engine = PolicyEngine(CaveatValidator())
-        self._initial_caveats = load_policies_from_yaml(config_path)
+        config = load_config_from_yaml(config_path)
+        self._initial_caveats = config["policies"]
+        self._policy_engine = PolicyEngine(
+            CaveatValidator(),
+            app=app,
+            elicit_expiry=config.get("config", {}).get("elicit_expiry", 3600),
+            secret_key=SECRET_KEY
+        )
         self._token_to_macaroon = {}  # In-memory cache
         logger.info(f"MacaroonMiddleware initialized with {len(self._initial_caveats)} initial caveats.")
 
-    async def on_call_tool(self, context, call_next):
+    async def on_call_tool(self, context:MiddlewareContext[mt.CallToolRequestParams], call_next):
         """
         The main middleware logic for handling tool calls.
         """
@@ -42,27 +49,30 @@ class MacaroonMiddleware(Middleware):
 
         # Pre-execution policy enforcement
         logger.debug(f"Enforcing pre-execution policies for tool: {context.message.name}")
-        self._policy_engine.enforce_policies(
+        macaroon = await self._policy_engine.enforce_policies(
             macaroon=macaroon,
             tool_name=context.message.name,
             phase=ExecutionPhase.BEFORE,
-            context=context,
+            context=context.fastmcp_context,
         )
-        logger.debug(f"Pre-execution policies enforced for tool: {context.message.name}")
+        self._token_to_macaroon[token_id] = macaroon.serialize()
+        logger.debug(f"Pre-execution policies enforced and macaroon updated for tool: {context.message.name}")
 
         result = await call_next(context)
         logger.debug(f"Tool '{context.message.name}' executed. Result obtained.")
 
         # Post-execution policy enforcement
         logger.debug(f"Enforcing post-execution policies for tool: {context.message.name}")
-        self._policy_engine.enforce_policies(
+        macaroon = await self._policy_engine.enforce_policies(
             macaroon=macaroon,
             tool_name=context.message.name,
             phase=ExecutionPhase.AFTER,
-            context=context,
+            context=context.fastmcp_context,
             result=result,
+            user_id=user_id
         )
-        logger.debug(f"Post-execution policies enforced for tool: {context.message.name}")
+        self._token_to_macaroon[token_id] = macaroon.serialize()
+        logger.debug(f"Post-execution policies enforced and macaroon updated for tool: {context.message.name}")
 
         return result
     

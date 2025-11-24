@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 from enum import Enum
 from datetime import datetime
-from typing import Tuple
+from typing import Tuple, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +26,7 @@ class Caveat:
     policy_name: str
     action: ActionType
     params: Tuple[str, ...]
+    expiry: Optional[datetime] = None
 
     @classmethod
     def from_string(cls, caveat_string: str) -> "Caveat":
@@ -39,15 +40,28 @@ class Caveat:
         phase_str = parts[0]
         tool_name = parts[1]
         policy_name = parts[2]
-        action = parts[3]
-        params = tuple(parts[4:]) if len(parts) > 4 else ()
+        action_str = parts[3]
+        
+        params_parts = list(parts[4:])
+        expiry = None
+        
+        if params_parts and params_parts[-1].startswith("time<"):
+            time_part = params_parts.pop()
+            try:
+                expiry_str = time_part.split("<")[1]
+                expiry = datetime.strptime(expiry_str, '%Y%m%dT%H%M%SZ')
+            except (IndexError, ValueError) as e:
+                logger.warning(f"Invalid time format in caveat '{caveat_string}': {e}")
+
+        params = tuple(params_parts)
 
         try:
             execution_phase = ExecutionPhase(phase_str)
-            logger.debug(f"Successfully parsed caveat: phase={phase_str}, tool={tool_name}, policy={policy_name}, action={action}, params={params}")
+            action = ActionType(action_str)
+            logger.debug(f"Successfully parsed caveat: phase={phase_str}, tool={tool_name}, policy={policy_name}, action={action}, params={params}, expiry={expiry}")
         except ValueError as e:
-            logger.error(f"Invalid execution phase in '{caveat_string}': {e}")
-            raise ValueError(f"Invalid execution phase in '{caveat_string}': {e}")
+            logger.error(f"Invalid execution phase or action in '{caveat_string}': {e}")
+            raise ValueError(f"Invalid execution phase or action in '{caveat_string}': {e}")
 
         return cls(
             raw=caveat_string,
@@ -56,4 +70,5 @@ class Caveat:
             policy_name=policy_name,
             action=action,
             params=params,
+            expiry=expiry,
         )
