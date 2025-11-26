@@ -1,0 +1,36 @@
+config:
+  secret_key: "super-secret-key"
+  elicit_expiry: 3600   # 1 hour permissions
+
+policies:
+  # ------------------------------------------------------
+  # ADMIN ROLE — FULL READ/WRITE PRIVILEGES
+  # ------------------------------------------------------
+
+  - "bf:get_repo:tool_access:allow"
+  - "bf:list_issues:tool_access:allow"
+  - "bf:create_issue:tool_access:allow"
+  - "bf:add_collaborator:tool_access:allow"
+  - "bf:read_file:tool_access:allow"
+  - "bf:write_file:tool_access:allow"
+  - "bf:delete_file:tool_access:allow"
+  - "bf:create_repo:tool_access:allow"
+  - "bf:delete_repo:tool_access:allow"
+
+  # ------------------------------------------------------
+  # FIELD-LEVEL ACCESS (NO RESTRICTIONS)
+  # ------------------------------------------------------
+  - "af:get_repo:field_access:allow:*"
+
+  # ------------------------------------------------------
+  # RATE LIMITING — HIGHER FOR ADMINS
+  # ------------------------------------------------------
+  - "bf:get_repo:allow_attempts:allow:50"
+  - "bf:list_issues:allow_attempts:allow:50"
+  - "bf:create_issue:allow_attempts:allow:20"
+  - "bf:add_collaborator:allow_attempts:allow:20"
+  - "bf:read_file:allow_attempts:allow:100"
+  - "bf:write_file:allow_attempts:allow:50"
+  - "bf:delete_file:allow_attempts:allow:20"
+  - "bf:create_repo:allow_attempts:allow:10"
+  - "bf:delete_repo:allow_attempts:allow:10"
