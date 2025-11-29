@@ -1,36 +1,49 @@
 config:
   secret_key: "super-secret-key"
-  elicit_expiry: 3600   # 1 hour permissions
+  elicit_expiry: 300  # 5 minutes only
 
 policies:
-  # ------------------------------------------------------
-  # ADMIN ROLE — FULL READ/WRITE PRIVILEGES
-  # ------------------------------------------------------
-
-  - "bf:get_repo:tool_access:allow"
-  - "bf:list_issues:tool_access:allow"
-  - "bf:create_issue:tool_access:allow"
-  - "bf:add_collaborator:tool_access:allow"
-  - "bf:read_file:tool_access:allow"
-  - "bf:write_file:tool_access:allow"
-  - "bf:delete_file:tool_access:allow"
-  - "bf:create_repo:tool_access:allow"
-  - "bf:delete_repo:tool_access:allow"
-
-  # ------------------------------------------------------
-  # FIELD-LEVEL ACCESS (NO RESTRICTIONS)
-  # ------------------------------------------------------
-  - "af:get_repo:field_access:allow:*"
-
-  # ------------------------------------------------------
-  # RATE LIMITING — HIGHER FOR ADMINS
-  # ------------------------------------------------------
-  - "bf:get_repo:allow_attempts:allow:50"
-  - "bf:list_issues:allow_attempts:allow:50"
-  - "bf:create_issue:allow_attempts:allow:20"
-  - "bf:add_collaborator:allow_attempts:allow:20"
-  - "bf:read_file:allow_attempts:allow:100"
-  - "bf:write_file:allow_attempts:allow:50"
-  - "bf:delete_file:allow_attempts:allow:20"
-  - "bf:create_repo:allow_attempts:allow:10"
-  - "bf:delete_repo:allow_attempts:allow:10"
+  # === READ-ONLY ACCESS WITH RESTRICTIONS ===
+  
+  # Repository access - whitelist only
+  - "bf:get_repo:repo_whitelist:allow:git-tutorial"
+  - "bf:get_repo:allow_attempts:allow:3"
+  - "bf:get_repo:time_window:allow:9:17"  # Business hours only
+  
+  # File reading - restricted paths
+  - "bf:read_file:repo_whitelist:allow:git-tutorial"
+  - "bf:read_file:path_whitelist:allow:README.md:docs/*:*.md"
+  - "bf:read_file:allow_attempts:allow:5"
+  
+  # Issues - limited access
+  - "bf:list_issues:repo_whitelist:allow:git-tutorial"
+  - "bf:list_issues:allow_attempts:allow:2"
+  
+  # === WRITE OPERATIONS - HEAVILY RESTRICTED ===
+  
+  # Issue creation - requires approval
+  - "bf:create_issue:tool_access:elicit"
+  - "bf:create_issue:allow_attempts:allow:1"
+  
+  # === COMPLETELY BLOCKED/RESTRICTED OPERATIONS ===
+  
+  - "bf:write_file:tool_access:elicit"
+  - "bf:delete_file:tool_access:deny"
+  - "bf:delete_repo:tool_access:deny"
+  - "bf:create_repo:tool_access:elicit"
+  - "bf:add_collaborator:tool_access:elicit"
+  
+  # === DATA REDACTION ===
+  
+  # Hide sensitive repo information
+  - "af:get_repo:field_access:deny:owner"
+  
+  # Hide issue details
+  - "af:list_issues:field_access:deny:body"
+  - "af:list_issues:field_access:deny:assignee"
+  - "af:list_issues:field_access:deny:labels"
+  - "af:list_issues:field_access:deny:user"
+  
+  # Hide file content metadata
+  - "af:read_file:field_access:deny:sha"
+  - "af:read_file:field_access:deny:git_url"

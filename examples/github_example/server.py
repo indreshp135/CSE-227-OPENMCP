@@ -2,15 +2,18 @@ import logging
 import requests
 from fastmcp import FastMCP
 from fastmcp.server.auth.providers.github import GitHubProvider
-from mcp_macaroon_middleware import MacaroonMiddleware
+from mcp_macaroon_middleware import MacaroonMiddleware, policy_enforcer, PolicyViolationError
+from fastmcp.server.middleware.middleware import mt, MiddlewareContext
+import os
 
 # --------------------------------------------------
 # CONFIG – FILL THESE IN
 # --------------------------------------------------
-GITHUB_CLIENT_ID = ""
-GITHUB_CLIENT_SECRET = ""
-BASE_URL = "http://localhost:9001"  # Must match GitHub OAuth app callback base
-GITHUB_PAT = ""  # PAT with repo access
+GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID", "")
+GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET", "")
+# Must match GitHub OAuth app callback base
+BASE_URL = os.getenv("BASE_URL", "http://localhost:9001")
+GITHUB_PAT = os.getenv("GITHUB_PAT", "")  # PAT with repo access
 
 # --------------------------------------------------
 # Logging
@@ -32,11 +35,14 @@ auth_provider = GitHubProvider(
 # --------------------------------------------------
 mcp = FastMCP(name="GitHub Basic API", auth=auth_provider)
 
-mcp.add_middleware(MacaroonMiddleware(config_path="examples/github_example/policies.yaml"))
+mcp.add_middleware(MacaroonMiddleware(
+    config_path="examples/github_example/policies.yaml"))
 
 # --------------------------------------------------
 # Helper: GitHub headers using PAT
 # --------------------------------------------------
+
+
 def github_headers() -> dict:
     return {
         "Authorization": f"Bearer {GITHUB_PAT}",
@@ -44,9 +50,50 @@ def github_headers() -> dict:
         "X-GitHub-Api-Version": "2022-11-28",
     }
 
+# --------------------------------------------------
+# Policy Enforcers
+# --------------------------------------------------
+
+
+@policy_enforcer("path_whitelist")
+def enforce_path_whitelist(caveat, context: MiddlewareContext[mt.CallToolRequestParams], result, macaroon, *allowed_patterns):
+    """Only allow access to specific file paths."""
+    request_path = context.message.arguments.get("path", "")
+
+    import fnmatch
+    if not any(fnmatch.fnmatch(request_path, pattern) for pattern in allowed_patterns):
+        raise PolicyViolationError(f"Access denied to path: {request_path}")
+    return []
+
+
+@policy_enforcer("repo_whitelist")
+def enforce_repo_whitelist(caveat, context: MiddlewareContext[mt.CallToolRequestParams], result, macaroon, *allowed_repos):
+    """Restrict access to specific repositories only."""
+    repo_name = context.message.arguments.get("repo", "")
+
+    if repo_name not in allowed_repos:
+        raise PolicyViolationError(f"Access denied to repository: {repo_name}")
+    return []
+
+
+@policy_enforcer("permission_level")
+def enforce_permission_level(caveat, context: MiddlewareContext[mt.CallToolRequestParams], result, macaroon, max_permission):
+    """Restrict collaborator permission levels."""
+    requested_permission = context.message.arguments.get("permission", "push")
+
+    permission_hierarchy = ["read", "triage", "write", "maintain", "admin"]
+    max_idx = permission_hierarchy.index(max_permission)
+    req_idx = permission_hierarchy.index(requested_permission)
+
+    if req_idx > max_idx:
+        raise PolicyViolationError(
+            f"Permission level {requested_permission} exceeds allowed {max_permission}")
+    return []
+
 # ======================================================================
 # USER TOOLS
 # ======================================================================
+
 
 @mcp.tool
 def get_repo(owner: str, repo: str):
@@ -63,6 +110,7 @@ def get_repo(owner: str, repo: str):
     except Exception as e:
         logger.exception("get_repo failed: %s", e)
         return {"error": str(e)}
+
 
 @mcp.tool
 def list_issues(owner: str, repo: str, state: str = "open"):
@@ -81,6 +129,7 @@ def list_issues(owner: str, repo: str, state: str = "open"):
         logger.exception("list_issues failed: %s", e)
         return {"error": str(e)}
 
+
 @mcp.tool
 def create_issue(owner: str, repo: str, title: str, body: str = ""):
     """Create a GitHub issue."""
@@ -98,6 +147,7 @@ def create_issue(owner: str, repo: str, title: str, body: str = ""):
         logger.exception("create_issue failed: %s", e)
         return {"error": str(e)}
 
+
 @mcp.tool
 def read_file(owner: str, repo: str, path: str, ref: str = "main"):
     """Read a file from a GitHub repo."""
@@ -114,7 +164,7 @@ def read_file(owner: str, repo: str, path: str, ref: str = "main"):
         data = resp.json()
 
         # GitHub returns file content base64-encoded
-        if data.get("encoding") == "base64":
+        if isinstance(data, dict) and data.get("encoding") == "base64":
             import base64
             decoded = base64.b64decode(data["content"]).decode("utf-8")
             data["decoded_content"] = decoded
@@ -127,6 +177,7 @@ def read_file(owner: str, repo: str, path: str, ref: str = "main"):
 # ======================================================================
 # ADMIN-ONLY TOOLS
 # ======================================================================
+
 
 @mcp.tool
 def create_repo(name: str, description: str = "", private: bool = True):
@@ -149,6 +200,7 @@ def create_repo(name: str, description: str = "", private: bool = True):
         logger.exception("create_repo failed: %s", e)
         return {"error": str(e)}
 
+
 @mcp.tool
 def delete_repo(owner: str, repo: str):
     """Delete a GitHub repository."""
@@ -168,6 +220,7 @@ def delete_repo(owner: str, repo: str):
         logger.exception("delete_repo failed: %s", e)
         return {"error": str(e)}
 
+
 @mcp.tool
 def add_collaborator(owner: str, repo: str, username: str, permission: str = "push"):
     """Add collaborator to a repo."""
@@ -186,6 +239,7 @@ def add_collaborator(owner: str, repo: str, username: str, permission: str = "pu
     except Exception as e:
         logger.exception("add_collaborator failed: %s", e)
         return {"error": str(e)}
+
 
 @mcp.tool
 def write_file(owner: str, repo: str, path: str, content: str, message: str, sha: str = None, branch: str = "main"):
@@ -218,6 +272,7 @@ def write_file(owner: str, repo: str, path: str, content: str, message: str, sha
         logger.exception("write_file failed: %s", e)
         return {"error": str(e)}
 
+
 @mcp.tool
 def delete_file(owner: str, repo: str, path: str, sha: str, message: str, branch: str = "main"):
     """Delete a file from a GitHub repo."""
@@ -247,6 +302,7 @@ def delete_file(owner: str, repo: str, path: str, sha: str, message: str, branch
 # ======================================================================
 # RUN SERVER
 # ======================================================================
+
 
 if __name__ == "__main__":
     logger.info("Starting GitHub API Server at %s/mcp", BASE_URL)
