@@ -72,7 +72,7 @@ class MacaroonMiddleware(Middleware):
         )
         self._token_to_macaroon[token_id] = macaroon.serialize()
         logger.debug(f"Post-execution policies enforced and macaroon updated for tool: {context.message.name}")
-        if result.structured_content is not None:
+        if hasattr(result, 'structured_content') and result.structured_content is not None:
             result.structured_content = None
             
         return result
