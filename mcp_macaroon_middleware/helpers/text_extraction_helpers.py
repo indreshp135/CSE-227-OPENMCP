@@ -2,10 +2,11 @@ import logging
 from typing import Any, Dict, List
 from mcp.types import TextContent
 import json
+from fastmcp.tools.tool import ToolResult
 
 logger = logging.getLogger(__name__)
 
-def extract_content_to_dicts(result) -> List[Dict[str, Any]]:
+def extract_content_to_dicts(result: ToolResult) -> List[Dict[str, Any]]:
     """
     Extracts content from a ToolResult, attempting to parse TextContent objects
     into a list of dictionaries. Handles various FastMCP result formats.

@@ -1,5 +1,5 @@
 import logging
-from typing import List, Any
+from typing import List
 from pymacaroons import Macaroon, Verifier
 from ..models.caveat import Caveat, ExecutionPhase, ActionType
 from ..validators.caveat_validator import CaveatValidator
@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from fastmcp import Context
 from fastmcp.server.elicitation import AcceptedElicitation
 from fastmcp.tools.tool import ToolResult
+from fastmcp.server.middleware.middleware import MiddlewareContext, mt
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ class PolicyEngine:
         macaroon: Macaroon,
         tool_name: str,
         phase: ExecutionPhase,
-        context: Context = None,
+        context: MiddlewareContext[mt.CallToolRequestParams] = None,
         result: ToolResult = None,
         user_id: str = None
     ) -> Macaroon:
@@ -74,7 +75,7 @@ class PolicyEngine:
         return macaroon
 
     async def _process_caveats(
-        self, caveats: List[Caveat], macaroon: Macaroon, context: Context, result: ToolResult
+        self, caveats: List[Caveat], macaroon: Macaroon, context: MiddlewareContext[mt.CallToolRequestParams], result: ToolResult
     ) -> List[Caveat]:
         """Process and enforce all applicable caveats."""
         new_caveats = []
@@ -83,7 +84,7 @@ class PolicyEngine:
             logger.debug(f"Processing caveat: {caveat.raw}")
             try:
                 if caveat.action == ActionType.ELICIT:
-                    elicited_caveat = await self._handle_elicit_action(macaroon, caveat, context)
+                    elicited_caveat = await self._handle_elicit_action(macaroon, caveat, context.fastmcp_context)
                     if elicited_caveat:
                         new_caveats.extend(self._execute_enforcer(elicited_caveat, context, result, macaroon))
                         new_caveats.append(elicited_caveat)
@@ -98,7 +99,7 @@ class PolicyEngine:
 
         return new_caveats
 
-    def _execute_enforcer(self, caveat: Caveat, context: Context, result: ToolResult, macaroon: Macaroon) -> List[Caveat]:
+    def _execute_enforcer(self, caveat: Caveat, context: MiddlewareContext[mt.CallToolRequestParams], result: ToolResult, macaroon: Macaroon) -> List[Caveat]:
         """Execute the enforcer for a given caveat."""
         enforcer = get_enforcer(caveat.policy_name)
         if enforcer:

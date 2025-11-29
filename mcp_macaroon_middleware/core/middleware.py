@@ -51,7 +51,7 @@ class MacaroonMiddleware(Middleware):
             macaroon=macaroon,
             tool_name=context.message.name,
             phase=ExecutionPhase.BEFORE,
-            context=context.fastmcp_context,
+            context=context,
             user_id=user_id
         )
         self._token_to_macaroon[token_id] = macaroon.serialize()
@@ -66,13 +66,15 @@ class MacaroonMiddleware(Middleware):
             macaroon=macaroon,
             tool_name=context.message.name,
             phase=ExecutionPhase.AFTER,
-            context=context.fastmcp_context,
+            context=context,
             result=result,
             user_id=user_id
         )
         self._token_to_macaroon[token_id] = macaroon.serialize()
         logger.debug(f"Post-execution policies enforced and macaroon updated for tool: {context.message.name}")
-
+        if result.structured_content is not None:
+            result.structured_content = None
+            
         return result
     
     def _get_or_create_macaroon(self, token_id: str, user_id: str) -> Macaroon:
