@@ -8,8 +8,11 @@ from ..exceptions import MacaroonMiddlewareError, DeserializationError
 from .policy_engine import PolicyEngine, ExecutionPhase
 from ..validators.caveat_validator import CaveatValidator
 from ..config.loader import load_config_from_yaml
+import time
 
 logger = logging.getLogger(__name__)
+
+
 class MacaroonMiddleware(Middleware):
     """
     A production-grade middleware for macaroon-based policy enforcement.
@@ -19,16 +22,18 @@ class MacaroonMiddleware(Middleware):
         logger.info("Initializing MacaroonMiddleware.")
         config = load_config_from_yaml(config_path)
         self._initial_caveats = config["policies"]
-        self._secret_key = config.get("config", {}).get("secret_key", os.environ.get("MACAROON_SECRET_KEY", "this_is_a_secret_key"))
+        self._secret_key = config.get("config", {}).get(
+            "secret_key", os.environ.get("MACAROON_SECRET_KEY", "this_is_a_secret_key"))
         self._policy_engine = PolicyEngine(
             CaveatValidator(),
             elicit_expiry=config.get("config", {}).get("elicit_expiry", 3600),
             secret_key=self._secret_key
         )
         self._token_to_macaroon = {}  # In-memory cache
-        logger.info(f"MacaroonMiddleware initialized with {len(self._initial_caveats)} initial caveats.")
+        logger.info(
+            f"MacaroonMiddleware initialized with {len(self._initial_caveats)} initial caveats.")
 
-    async def on_call_tool(self, context:MiddlewareContext[mt.CallToolRequestParams], call_next):
+    async def on_call_tool(self, context: MiddlewareContext[mt.CallToolRequestParams], call_next):
         """
         The main middleware logic for handling tool calls.
         """
@@ -37,16 +42,21 @@ class MacaroonMiddleware(Middleware):
             token = get_access_token()
             user_id = token.claims.get("login", "unknown_user")
             token_id = f"{user_id}_{hash(str(token.claims))}"
-            logger.debug(f"Authenticated user_id: {user_id}, token_id: {token_id}")
+            logger.debug(
+                f"Authenticated user_id: {user_id}, token_id: {token_id}")
         except Exception as e:
             logger.error(f"Failed to get access token: {e}")
             raise MacaroonMiddlewareError(f"Failed to get access token: {e}")
+
+        # Measure latency for macaroon-related operations
+        start_time = time.perf_counter()
 
         macaroon = self._get_or_create_macaroon(token_id, user_id)
         logger.debug(f"Macaroon obtained for user {user_id}.")
 
         # Pre-execution policy enforcement
-        logger.debug(f"Enforcing pre-execution policies for tool: {context.message.name}")
+        logger.debug(
+            f"Enforcing pre-execution policies for tool: {context.message.name}")
         macaroon = await self._policy_engine.enforce_policies(
             macaroon=macaroon,
             tool_name=context.message.name,
@@ -55,13 +65,24 @@ class MacaroonMiddleware(Middleware):
             user_id=user_id
         )
         self._token_to_macaroon[token_id] = macaroon.serialize()
-        logger.debug(f"Pre-execution policies enforced and macaroon updated for tool: {context.message.name}")
+        logger.debug(
+            f"Pre-execution policies enforced and macaroon updated for tool: {context.message.name}")
+
+        # Log latency after pre-execution
+        pre_execution_latency = time.perf_counter() - start_time
+        logger.info(
+            f"Pre-execution macaroon latency: {pre_execution_latency:.6f} seconds")
 
         result = await call_next(context)
-        logger.debug(f"Tool '{context.message.name}' executed. Result obtained.")
+        logger.debug(
+            f"Tool '{context.message.name}' executed. Result obtained.")
+
+        # Measure latency for post-execution policy enforcement
+        start_time = time.perf_counter()
 
         # Post-execution policy enforcement
-        logger.debug(f"Enforcing post-execution policies for tool: {context.message.name}")
+        logger.debug(
+            f"Enforcing post-execution policies for tool: {context.message.name}")
         macaroon = await self._policy_engine.enforce_policies(
             macaroon=macaroon,
             tool_name=context.message.name,
@@ -71,24 +92,34 @@ class MacaroonMiddleware(Middleware):
             user_id=user_id
         )
         self._token_to_macaroon[token_id] = macaroon.serialize()
-        logger.debug(f"Post-execution policies enforced and macaroon updated for tool: {context.message.name}")
+        logger.debug(
+            f"Post-execution policies enforced and macaroon updated for tool: {context.message.name}")
+
+        # Log latency after post-execution
+        post_execution_latency = time.perf_counter() - start_time
+        logger.info(
+            f"Post-execution macaroon latency: {post_execution_latency:.6f} seconds")
+
         if hasattr(result, 'structured_content') and result.structured_content is not None:
             result.structured_content = None
-            
+
         return result
-    
+
     def _get_or_create_macaroon(self, token_id: str, user_id: str) -> Macaroon:
         """
         Retrieves a macaroon from the cache or creates a new one.
         """
         if token_id in self._token_to_macaroon:
-            logger.debug(f"Retrieving macaroon from cache for token_id: {token_id}")
+            logger.debug(
+                f"Retrieving macaroon from cache for token_id: {token_id}")
             serialized_macaroon = self._token_to_macaroon[token_id]
             try:
                 return Macaroon.deserialize(serialized_macaroon)
             except Exception as e:
-                logger.error(f"Failed to deserialize cached macaroon for token_id {token_id}: {e}")
-                raise DeserializationError("Failed to deserialize cached macaroon.")
+                logger.error(
+                    f"Failed to deserialize cached macaroon for token_id {token_id}: {e}")
+                raise DeserializationError(
+                    "Failed to deserialize cached macaroon.")
 
         logger.debug(f"Creating new base macaroon for user_id: {user_id}")
         macaroon = self._create_base_macaroon(user_id)
@@ -105,7 +136,7 @@ class MacaroonMiddleware(Middleware):
             identifier=f"user_{user_id}",
             key=self._secret_key,
         )
-        
+
         for caveat_str in self._initial_caveats:
             macaroon.add_first_party_caveat(caveat_str)
             logger.debug(f"Added initial caveat from config: {caveat_str}")

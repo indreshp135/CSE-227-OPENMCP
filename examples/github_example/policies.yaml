@@ -6,17 +6,17 @@ policies:
   # === READ-ONLY ACCESS WITH RESTRICTIONS ===
   
   # Repository access - whitelist only
-  - "bf:get_repo:repo_whitelist:allow:git-tutorial"
+  - "bf:get_repo:repo_whitelist:allow:organization-alpha-repo:project-beta-repo"
   - "bf:get_repo:allow_attempts:allow:3"
   - "bf:get_repo:time_window:allow:9:17"  # Business hours only
   
   # File reading - restricted paths
-  - "bf:read_file:repo_whitelist:allow:git-tutorial"
+  - "bf:read_file:repo_whitelist:allow:organization-alpha-repo:project-beta-repo"
   - "bf:read_file:path_whitelist:allow:README.md:docs/*:*.md"
   - "bf:read_file:allow_attempts:allow:5"
   
   # Issues - limited access
-  - "bf:list_issues:repo_whitelist:allow:git-tutorial"
+  - "bf:list_issues:repo_whitelist:allow:organization-alpha-repo:project-beta-repo"
   - "bf:list_issues:allow_attempts:allow:2"
   
   # === WRITE OPERATIONS - HEAVILY RESTRICTED ===
@@ -47,3 +47,4 @@ policies:
   # Hide file content metadata
   - "af:read_file:field_access:deny:sha"
   - "af:read_file:field_access:deny:git_url"
+  - "af:read_file:field_access:elicit:content"

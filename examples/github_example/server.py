@@ -51,7 +51,7 @@ def github_headers() -> dict:
     }
 
 # --------------------------------------------------
-# Policy Enforcers
+# Custom Policy Enforcers
 # --------------------------------------------------
 
 

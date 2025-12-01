@@ -1,28 +1,79 @@
 # MCP Macaroon Middleware
 
-**Production-grade macaroon-based authorization middleware for FastMCP servers with fine-grained, progressive policy enforcement.**
+**A production-grade, macaroon-based authorization middleware for Python applications, offering fine-grained, progressive, and policy-driven access control.**
 
 [![PyPI version](https://badge.fury.io/py/mcp-macaroon-middleware.svg)](https://badge.fury.io/py/mcp-macaroon-middleware)
 
 ## Overview
 
-`mcp_macaroon_middleware` provides cryptographic capability-based authorization for FastMCP servers using macaroons. Unlike traditional OAuth/JWT tokens, macaroons support **attenuation** (adding restrictions without re-signing), **offline verification**, and **progressive authorization** where permissions can be dynamically elicited from users.
+`mcp_macaroon_middleware` provides cryptographic, capability-based authorization using macaroons. Unlike traditional OAuth/JWT tokens, macaroons enable advanced security patterns like **decentralized attenuation** (adding restrictions without re-signing), **offline verification**, and **progressive authorization**, where permissions can be dynamically requested from users in real-time.
+
+This middleware is designed to solve common and complex authorization challenges, moving beyond simple "all-or-nothing" access. It allows you to protect sensitive functions, redact specific data fields, and enforce complex, context-aware rules with minimal boilerplate code. By externalizing authorization logic into a simple YAML file and extensible Python functions, it helps you build more secure, maintainable, and user-friendly applications.
 
 **Key Benefits:**
-- **Decentralized Authorization**: Verify tokens without callback to authorization server
-- **Progressive Permissions**: Request additional permissions on-demand via user elicitation
-- **Fine-Grained Control**: Pre-call and post-call policies with field-level access control
-- **Policy-as-Code**: Define authorization rules as Python functions with full type safety
+- **Solve Over-Privileged Tokens**: Replace static API keys with short-lived, narrowly-scoped credentials that have fine-grained permissions.
+- **Decentralized Authorization**: Verify tokens anywhere, without a network call to an authorization server, reducing latency and single points of failure.
+- **Progressive Permissions**: Instead of requesting all permissions upfront, prompt users for approval only when they try to access a sensitive feature or data field.
+- **Fine-Grained Control**: Enforce rules before a function executes (e.g., rate limiting, access control) and after it returns (e.g., redacting sensitive fields from a response).
+- **Policy-as-Code**: Define authorization rules in a simple, auditable YAML file, separating policy from application logic.
 
-## Features
+## Core Concepts
 
-- 🔐 **Macaroon-based tokens** with cryptographic verification
-- 📋 **Flexible policy system** with pre-call and post-call execution stages
-- 🎯 **Built-in enforcers** for tool access, field redaction, and rate limiting
-- 🔄 **Progressive authorization** via user elicitation with time-bound grants
-- 🎨 **Pluggable architecture** for custom policy enforcers
-- ⚡ **In-memory caching** with per-user macaroon state
-- 🛡️ **FastMCP integration** via standard middleware hooks
+`mcp_macaroon_middleware` is built on a few powerful concepts that enable flexible and secure authorization.
+
+### 1. Policy-as-Code in YAML
+Instead of hardcoding business rules in your application, you define them in a simple, human-readable YAML file. This separates authorization logic from your application code, making it easier to manage, audit, and update policies without redeploying your application.
+
+```yaml
+policies:
+  # Deny access to a specific function before it's called
+  - "bf:admin_tool:tool_access:deny"
+
+  # Redact a sensitive field from an object after it's returned
+  - "af:get_user_profile:field_access:deny:user_pii.social_security_number"
+
+  # Ask the user for permission before accessing their attachments
+  - "af:read_emails:field_access:elicit:attachments"
+```
+
+### 2. Two-Phase Policy Enforcement
+Policies are enforced in two distinct phases, giving you complete control over your functions' execution lifecycle:
+
+- **`bf` (Before-Call):** Executed *before* your function is called. Ideal for coarse-grained access control, rate limiting, or input validation. If a `deny` policy is triggered here, the function is never executed.
+- **`af` (After-Call):** Executed *after* your function returns a result. Perfect for fine-grained response filtering, redacting sensitive data fields, or triggering side-effects based on the output.
+
+### 3. Progressive Authorization via Elicitation
+For actions that are sensitive but not always disallowed, you can use the `elicit` action. This will automatically prompt the user for real-time approval when they attempt the action. If the user grants permission, the middleware adds a temporary, time-bound caveat to their macaroon, allowing them to perform the action for a limited period without being prompted again. This provides a seamless user experience while maintaining a "least privilege" security posture.
+
+### 4. Extensible Custom Enforcers
+While the middleware comes with built-in policies for common use cases (like tool access and field redaction), its real power lies in its extensibility. You can easily create your own complex, context-aware authorization rules using a simple Python decorator.
+
+Custom enforcers can inspect anything in the request context (like user roles, IP addresses, or request parameters) to make dynamic authorization decisions.
+
+```python
+# A custom enforcer that only allows access during business hours
+@policy_enforcer("business_hours")
+def enforce_business_hours(caveat: Caveat, context: Context, **kwargs) -> List[Caveat]:
+    hour = datetime.now().hour
+    if not (9 <= hour < 17):
+        raise PolicyViolationError("Access only allowed during business hours")
+    return [] # Success
+```
+You can then use this custom enforcer directly in your `policies.yaml`:
+```yaml
+policies:
+  - "bf:sensitive_tool:business_hours:allow"
+```
+
+## How It Solves Common Security Problems
+
+| Security Problem | How `mcp-macaroon-middleware` Solves It |
+| :--- | :--- |
+| **Over-Privileged API Keys** | Replaces static, long-lived API keys with short-lived, narrowly-scoped macaroons. Permissions can be attenuated (restricted) for specific tasks without needing a new token. |
+| **Data Leakage / Accidental Exposure** | The `after-call` enforcement phase allows you to dynamically redact sensitive fields from API responses based on the requesting user's permissions, ensuring that clients only see the data they are authorized to see. |
+| **Hardcoded Authorization Logic**| Moves authorization logic out of your application code and into a separate, auditable policy layer. This makes your codebase cleaner and your security rules easier to manage and reason about. |
+| **Poor User Experience vs. Security** | The progressive authorization (`elicit`) feature provides a powerful middle ground between denying access and always allowing it. It improves security by default while giving users a frictionless way to grant permissions when needed. |
+| **Centralized Bottlenecks** | Macaroons can be verified cryptographically without calling back to a central authorization server. This is ideal for distributed systems and reduces latency and single points of failure. |
 
 ## Installation
 
@@ -38,198 +89,151 @@ pip install -e '.[dev]'
 
 ## Quick Start
 
-### 1. Define Policies (policies.yaml)
+This guide provides a conceptual overview. For a runnable example, see the `examples/` directory.
+
+### 1. Define Your Policies
+Create a `policies.yaml` file to define your authorization rules.
 
 ```yaml
 config:
   secret_key: "your-secret-key-here"
-  elicit_expiry: 3600  # Permission grants valid for 1 hour
+  elicit_expiry: 3600 # Elicited permissions are valid for 1 hour
 
 policies:
-  # Tool-level access control
+  # Allow access to 'read_emails' but deny access to 'admin_tool'
   - "bf:read_emails:tool_access:allow"
+  - "bf:admin_tool:tool_access:deny"
   
-  # Rate limiting (2 attempts)
-  - "bf:read_emails:allow_attempts:allow:2"
-  
-  # Field-level permissions
-  - "af:read_emails:field_access:allow:subject"
+  # After 'read_emails' is called, deny access to the 'body' field
   - "af:read_emails:field_access:deny:body"
+
+  # For the 'read_emails' function, prompt the user for permission to access 'attachments'
   - "af:read_emails:field_access:elicit:attachments"
 ```
 
-**Caveat Format**: `{phase}:{tool}:{policy}:{action}:{params...}`
-
-- **Phase**: `bf` (before call) or `af` (after call)
-- **Action**: `allow`, `deny`, or `elicit` (prompt user)
-- **Params**: Policy-specific parameters (fields, counts, etc.)
-
-### 2. Create FastMCP Server
+### 2. Write a Custom Enforcer (Optional)
+For more complex rules, create a custom enforcer function in your application and register it with the `@policy_enforcer` decorator.
 
 ```python
-from fastmcp import FastMCP
-from fastmcp.server.auth.providers.github import GitHubProvider
-from mcp_macaroon_middleware import MacaroonMiddleware
-
-# Initialize with OAuth provider
-auth_provider = GitHubProvider(
-    client_id=GITHUB_CLIENT_ID,
-    client_secret=GITHUB_CLIENT_SECRET,
-    base_url="http://localhost:9001"
-)
-
-mcp = FastMCP(name="Secure API", auth=auth_provider)
-
-# Add macaroon middleware
-mcp.add_middleware(MacaroonMiddleware(config_path="./policies.yaml"))
-
-@mcp.tool
-def read_emails(sender: str, last_n: int = 1):
-    """Read emails with field-level authorization."""
-    return [
-        {
-            "subject": "Meeting Tomorrow",
-            "body": "Let's discuss the project...",
-            "attachments": ["proposal.pdf"]
-        }
-    ]
-
-mcp.run(transport="http", port=9001)
-```
-
-### 3. Request Flow
-
-1. **Initial Request**: User authenticates via OAuth
-2. **Macaroon Creation**: Middleware creates macaroon with policies from YAML
-3. **Pre-call Enforcement**: Checks tool access and rate limits
-4. **Tool Execution**: Your function runs normally
-5. **Post-call Enforcement**: Applies field redaction or prompts for permissions
-6. **Progressive Auth**: If `elicit` action, user prompted for permission
-7. **Cached State**: Updated macaroon stored for subsequent requests
-
-## Policy System
-
-### Built-in Enforcers
-
-#### Tool Access Control
-```python
-# In policies.yaml
-- "bf:read_emails:tool_access:allow"    # Grant access
-- "bf:send_email:tool_access:deny"      # Block access
-```
-
-#### Field-Level Redaction
-```python
-# Redact specific fields from responses
-- "af:read_emails:field_access:deny:body"
-- "af:read_emails:field_access:deny:attachments"
-```
-
-#### Progressive Authorization
-```python
-# Prompt user for permission on first access
-- "af:read_emails:field_access:elicit:attachments"
-
-# User prompted: "Grant permission for: af:read_emails:field_access:elicit:attachments?"
-# If approved, adds time-bound caveat: "...elicit:attachments:time<20250324T120000Z"
-```
-
-#### Rate Limiting
-```python
-# Allow 3 calls, then deny
-- "bf:api_call:allow_attempts:allow:3"
-```
-
-### Custom Enforcers
-
-Create custom policies by registering enforcement functions:
-
-```python
-from mcp_macaroon_middleware import policy_enforcer, Caveat
-from typing import List
+from mcp_macaroon_middleware import policy_enforcer, PolicyViolationError
+from datetime import datetime
 
 @policy_enforcer("business_hours")
-def enforce_business_hours(
-    caveat: Caveat,
-    context: Context,
-    result: ToolResult,
-    macaroon: Macaroon
-) -> List[Caveat]:
-    """Only allow access during business hours (9 AM - 5 PM)."""
-    from datetime import datetime
-    
+def enforce_business_hours(caveat, context, **kwargs):
+    """Only allow access between 9 AM and 5 PM."""
     hour = datetime.now().hour
     if not (9 <= hour < 17):
         raise PolicyViolationError("Access only allowed during business hours")
-    
-    return []  # No new caveats to add
+    return []
 ```
-
-Use in policies.yaml:
+Then, reference it in your `policies.yaml`:
 ```yaml
 - "bf:sensitive_tool:business_hours:allow"
 ```
 
-### Advanced Example: Document Ownership
+### 3. Integrate the Middleware
+In your application's request lifecycle, initialize `MacaroonMiddleware` and `PolicyEngine`. Then, invoke the policy engine at the appropriate stages.
 
 ```python
-@policy_enforcer("document_owner")
-def enforce_document_ownership(
-    caveat: Caveat,
-    context: Context,
-    result: ToolResult,
-    macaroon: Macaroon,
-    document_id: str
-) -> List[Caveat]:
-    """Verify user owns the document."""
-    user_id = context.get("user_id")
-    
-    # Check ownership in your DB
-    if not db.check_owner(document_id, user_id):
-        raise PolicyViolationError(f"User {user_id} doesn't own document {document_id}")
-    
-    return []
-```
+from mcp_macaroon_middleware import MacaroonMiddleware, PolicyEngine
+from mcp_macaroon_middleware.core.policy_engine import RequestContext
 
-```yaml
-# In policies.yaml - pass document_id as parameter
-- "bf:get_document:document_owner:allow:doc_123"
+# 1. Initialize the middleware (typically once at startup)
+# This will load your policies from the YAML file.
+middleware = MacaroonMiddleware(config_path="./policies.yaml")
+
+# In your request handler / middleware layer:
+async def handle_request(request):
+    # 2. Get or create a macaroon for the user
+    macaroon = await middleware._get_or_create_macaroon(request.user_id)
+
+    # 3. Define the request context
+    # This context is available to all policy enforcers
+    context = RequestContext(
+        user_id=request.user_id,
+        # ... other relevant data like user roles, IP address, etc.
+    )
+
+    # 4. Enforce "before-call" policies
+    # This happens before your main business logic
+    modified_macaroon = await middleware.policy_engine.enforce_policies(
+        macaroon,
+        'bf', # ExecutionPhase.BEFORE
+        tool_name="my_protected_function",
+        context=context
+    )
+    
+    # If no PolicyViolationError was raised, proceed.
+    # 5. Execute your main business logic
+    result = my_protected_function(request.params)
+
+    # 6. Enforce "after-call" policies
+    # This happens after your function returns, allowing you to filter the result
+    final_result, modified_macaroon = await middleware.policy_engine.enforce_policies(
+        macaroon,
+        'af', # ExecutionPhase.AFTER
+        tool_name="my_protected_function",
+        context=context,
+        result=result
+    )
+    
+    # 7. The user receives the potentially redacted 'final_result'
+    return final_result
 ```
+*Note: The example above is a simplified, conceptual guide. The current `MacaroonMiddleware` class in `mcp_macaroon_middleware` provides a direct integration for the `FastMCP` framework.*
 
 ## Architecture
 
+The middleware's architecture is composed of a few key components that work together to enforce authorization policies.
+
 ```
-┌─────────────────┐
-│  OAuth Token    │
-│  (GitHub, etc)  │
-└────────┬────────┘
+┌──────────────────┐
+│  Initial Request │
+│ (e.g., HTTP API) │
+└────────┬─────────┘
          │
          ▼
-┌─────────────────────────┐
-│  MacaroonMiddleware     │
-│  • Creates macaroon     │
-│  • Caches per-user      │
-└────────┬────────────────┘
+┌──────────────────┐      ┌─────────────────┐
+│ Get or Create    ├──────► In-Memory Cache │
+│ User Macaroon    │      │ (Per-User State)│
+└────────┬─────────┘      └─────────────────┘
          │
          ▼
-┌─────────────────────────┐
-│   PolicyEngine          │
-│  • Parse caveats        │
-│  • Execute enforcers    │
-│  • Handle elicitation   │
-└────────┬────────────────┘
+┌──────────────────┐      ┌─────────────────┐
+│  Policy Engine   ├──────►  Policy & Custom│
+│                  │      │    Enforcers    │
+└────────┬─────────┘      └─────────────────┘
          │
     ┌────┴────┐
     ▼         ▼
 ┌───────┐ ┌───────┐
 │ BEFORE│ │ AFTER │
-│ phase │ │ phase │
+│ Phase │ │ Phase │
 └───────┘ └───────┘
     │         │
     ▼         ▼
- Tool      Field
-Access   Redaction
+ Function  Result
+ Execution Redaction
 ```
+## Framework and Developer Notes
+
+### Framework Integration
+The core logic of this middleware is framework-agnostic. The `PolicyEngine` is the central component that takes a macaroon, a set of policies, and a request context, and returns an authorization decision.
+
+The `MacaroonMiddleware` class currently provides a convenient, out-of-the-box integration for the [FastMCP](https://github.com/jlowin/fastmcp) framework by implementing its `on_call_tool` hook.
+
+**Adapting to Other Frameworks (e.g., FastAPI, Flask):**
+To use this middleware with another web framework, you would create a new middleware class or decorator that:
+1.  Initializes the `PolicyEngine` with your policies.
+2.  Extracts user identity from the incoming request.
+3.  Manages the lifecycle of the user's macaroon (e.g., retrieving it from a cache or creating a new one).
+4.  Calls `policy_engine.enforce_policies` before and after your endpoint/controller logic is executed.
+5.  Handles `PolicyViolationError` exceptions by returning an appropriate HTTP error (e.g., `403 Forbidden`).
+6.  Manages the user prompt-and-response flow required for the `elicit` action.
+
+### Production Considerations
+- **Caching:** The default in-memory cache is for demonstration purposes and is tied to a single process. For production, multi-instance deployments, this should be replaced with a distributed cache like **Redis** to ensure that a user's macaroon state is consistent across all application servers.
+- **Secret Management:** The `secret_key` used for signing macaroons should be treated as a sensitive secret. Load it from a secure source like an environment variable or a secret management service (e.g., HashiCorp Vault, AWS Secrets Manager).
 
 ## Configuration
 
@@ -246,13 +250,13 @@ policies:
 
 ## Examples
 
-See the `examples/` directory:
-- `server.py` - Complete FastMCP server with GitHub OAuth
-- `policies.yaml` - Sample policy configuration
+See the `examples/` directory for a complete, runnable server using the `FastMCP` framework.
+- `server.py` - Complete server with GitHub OAuth and custom enforcers.
+- `policies.yaml` - Sample policy configuration for the server.
 
 Run the example:
 ```bash
-cd examples
+cd examples/github_example
 pip install -r requirements.txt
 python server.py
 ```
@@ -269,7 +273,7 @@ MacaroonMiddleware(config_path: str)
 - `config_path`: Path to policies.yaml configuration file
 
 **Methods:**
-- `on_call_tool(context, call_next)`: Main middleware hook
+- `on_call_tool(context, call_next)`: Main middleware hook for FastMCP.
 
 ### Policy Enforcer Decorator
 
@@ -285,13 +289,16 @@ def my_enforcer(
     """
     Args:
         caveat: Parsed caveat object
-        context: FastMCP request context
+        context: Request context containing user info
         result: Tool execution result (None for pre-call)
         macaroon: Current macaroon instance
-        *params: Additional parameters from caveat string
+        *params: Additional parameters from the caveat string
     
     Returns:
-        List of new caveats to add to macaroon
+        A list of new caveats to add to the macaroon upon success.
+    
+    Raises:
+        PolicyViolationError: If the authorization check fails.
     """
     pass
 ```
@@ -337,11 +344,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Security Considerations
 
-- Store `secret_key` securely (use environment variables or secrets management)
-- Use HTTPS in production to protect macaroon transmission
-- Set appropriate `elicit_expiry` values for your use case
-- Review and audit custom policy enforcers for security vulnerabilities
-- Consider implementing additional caveats for IP restrictions, time windows, etc.
+- **Secret Key:** Store `secret_key` securely (use environment variables or secrets management).
+- **Transport Security:** Use HTTPS in production to protect macaroons from being intercepted.
+- **Elicitation Expiry:** Set appropriate `elicit_expiry` values. Short expiries are safer but may require users to grant permission more often.
+- **Audit Custom Enforcers:** Carefully review and test custom policy enforcers for security vulnerabilities, as they are a critical part of your security model.
+- **Input Validation:** While this middleware provides authorization, always validate and sanitize user-provided input in your main application logic.
 
 ## License
 
