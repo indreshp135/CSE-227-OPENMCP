@@ -31,14 +31,6 @@ auth_provider = GitHubProvider(
 )
 
 # --------------------------------------------------
-# FastMCP Server (with macaroon middleware)
-# --------------------------------------------------
-mcp = FastMCP(name="GitHub Basic API", auth=auth_provider)
-
-mcp.add_middleware(MacaroonMiddleware(
-    config_path="examples/github_example/policies.yaml"))
-
-# --------------------------------------------------
 # Helper: GitHub headers using PAT
 # --------------------------------------------------
 
@@ -51,9 +43,13 @@ def github_headers() -> dict:
     }
 
 # --------------------------------------------------
-# Custom Policy Enforcers
+# FastMCP Server (with macaroon middleware)
 # --------------------------------------------------
+mcp = FastMCP(name="GitHub Basic API", auth=auth_provider)
 
+### Authorization Middleware ###
+mcp.add_middleware(MacaroonMiddleware(
+    config_path="examples/github_example/policies.yaml"))
 
 @policy_enforcer("path_whitelist")
 def enforce_path_whitelist(caveat, context: MiddlewareContext[mt.CallToolRequestParams], result, macaroon, *allowed_patterns):
@@ -65,29 +61,16 @@ def enforce_path_whitelist(caveat, context: MiddlewareContext[mt.CallToolRequest
         raise PolicyViolationError(f"Access denied to path: {request_path}")
     return []
 
-
 @policy_enforcer("repo_whitelist")
 def enforce_repo_whitelist(caveat, context: MiddlewareContext[mt.CallToolRequestParams], result, macaroon, *allowed_repos):
     """Restrict access to specific repositories only."""
     repo_name = context.message.arguments.get("repo", "")
 
+    if not repo_name:
+        repo_name = context.message.arguments.get('name', '')
+
     if repo_name not in allowed_repos:
         raise PolicyViolationError(f"Access denied to repository: {repo_name}")
-    return []
-
-
-@policy_enforcer("permission_level")
-def enforce_permission_level(caveat, context: MiddlewareContext[mt.CallToolRequestParams], result, macaroon, max_permission):
-    """Restrict collaborator permission levels."""
-    requested_permission = context.message.arguments.get("permission", "push")
-
-    permission_hierarchy = ["read", "triage", "write", "maintain", "admin"]
-    max_idx = permission_hierarchy.index(max_permission)
-    req_idx = permission_hierarchy.index(requested_permission)
-
-    if req_idx > max_idx:
-        raise PolicyViolationError(
-            f"Permission level {requested_permission} exceeds allowed {max_permission}")
     return []
 
 # ======================================================================

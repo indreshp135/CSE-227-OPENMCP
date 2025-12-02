@@ -1,50 +1,67 @@
 config:
-  secret_key: "super-secret-key"
-  elicit_expiry: 300  # 5 minutes only
+  # Configuration settings
+  secret_key: "asdadwawacsclijpo2j4i13jepo23jefa#@$241edsadxla!@xasda"  # Secret key for authentication
+  elicit_expiry: 300  # Elicit tool expiry time (5 minutes)
 
 policies:
-  # === READ-ONLY ACCESS WITH RESTRICTIONS ===
-  
-  # Repository access - whitelist only
-  - "bf:get_repo:repo_whitelist:allow:organization-alpha-repo:project-beta-repo"
-  - "bf:get_repo:allow_attempts:allow:3"
-  - "bf:get_repo:time_window:allow:9:17"  # Business hours only
-  
-  # File reading - restricted paths
-  - "bf:read_file:repo_whitelist:allow:organization-alpha-repo:project-beta-repo"
-  - "bf:read_file:path_whitelist:allow:README.md:docs/*:*.md"
-  - "bf:read_file:allow_attempts:allow:5"
-  
-  # Issues - limited access
-  - "bf:list_issues:repo_whitelist:allow:organization-alpha-repo:project-beta-repo"
-  - "bf:list_issues:allow_attempts:allow:2"
-  
-  # === WRITE OPERATIONS - HEAVILY RESTRICTED ===
-  
+  # === REPOSITORY ACCESS POLICIES ===
+
+  # Repository creation - restricted to specific repo
+  - "bf:create_repo:repo_whitelist:allow:project-beta-repo"
+  - "bf:create_repo:tool_access:elicit"  # Requires elicit tool
+  - "af:create_repo:field_access:deny:owner" # No field access on creation
+
+  # === FILE ACCESS POLICIES ===
+
+  # File writing - restricted paths, tools, and attempts
+  - "bf:write_file:repo_whitelist:allow:project-beta-repo"  # Whitelisted repo access
+  - "bf:write_file:path_whitelist:allow:docs/*:*.md"  # Allowed paths
+  - "bf:write_file:tool_access:elicit"  # Requires elicit tool
+  - "bf:write_file:allow_attempts:allow:2"  # Max 2 attempts allowed
+  - "af:write_file:field_access:deny:content"  # Hide file content after writing
+  - "af:write_file:field_access:deny:commit"  # Hide commit info after writing
+
+  # === BLOCKED/RESTRICTED OPERATIONS ===
+  # File and repo deletion - completely blocked
+  - "bf:delete_file:tool_access:deny"  # File deletion denied
+  # - "bf:delete_repo:tool_access:deny"  # Repo deletion denied
+
+  # === FILE ACCESS POLICIES ===
+
+  # File reading - restricted paths and attempts
+  # - "bf:read_file:repo_whitelist:allow:project-beta-repo"  # Whitelisted repo access
+  - "bf:read_file:path_whitelist:allow:README.md:docs/*:*.md"  # Allowed paths
+  - "bf:read_file:allow_attempts:allow:5"  # Max 5 attempts allowed
+  # File metadata redaction
+  - "af:read_file:field_access:deny:sha"  # Hide file SHA
+  - "af:read_file:field_access:deny:git_url"  # Hide file Git URL
+  - "af:read_file:field_access:elicit:content"  # Requires elicit tool for file content
+
+  # === ISSUE ACCESS POLICIES ===
+
+  # Issue listing - restricted repo and attempts
+  - "bf:list_issues:repo_whitelist:allow:project-beta-repo"  # Whitelisted repo access
+  - "bf:list_issues:allow_attempts:allow:2"  # Max 2 attempts allowed
+
   # Issue creation - requires approval
-  - "bf:create_issue:tool_access:elicit"
-  - "bf:create_issue:allow_attempts:allow:1"
+  - "bf:create_issue:tool_access:elicit"  # Requires elicit tool
+  - "bf:create_issue:allow_attempts:allow:1"  # Max 1 attempt allowed
+
+  # Repo creation and collaborator addition - requires approval
+  - "bf:add_collaborator:tool_access:elicit"  # Requires elicit tool
+
+  # === DATA REDACTION POLICIES ===
+
+  # Repository data redaction
+  - "af:get_repo:field_access:deny:owner"  # Hide repo owner information
+
+  # Issue data redaction
+  - "af:list_issues:field_access:deny:body"  # Hide issue body
+  - "af:list_issues:field_access:deny:assignee"  # Hide issue assignee
+  - "af:list_issues:field_access:deny:labels"  # Hide issue labels
+  - "af:list_issues:field_access:deny:user"  # Hide issue user
   
-  # === COMPLETELY BLOCKED/RESTRICTED OPERATIONS ===
-  
-  - "bf:write_file:tool_access:elicit"
-  - "bf:delete_file:tool_access:deny"
-  - "bf:delete_repo:tool_access:deny"
-  - "bf:create_repo:tool_access:elicit"
-  - "bf:add_collaborator:tool_access:elicit"
-  
-  # === DATA REDACTION ===
-  
-  # Hide sensitive repo information
-  - "af:get_repo:field_access:deny:owner"
-  
-  # Hide issue details
-  - "af:list_issues:field_access:deny:body"
-  - "af:list_issues:field_access:deny:assignee"
-  - "af:list_issues:field_access:deny:labels"
-  - "af:list_issues:field_access:deny:user"
-  
-  # Hide file content metadata
-  - "af:read_file:field_access:deny:sha"
-  - "af:read_file:field_access:deny:git_url"
-  - "af:read_file:field_access:elicit:content"
+  # Repository access - whitelist and restrictions
+  - "bf:get_repo:repo_whitelist:allow:project-beta-repo"  # Whitelisted repo access
+  - "bf:get_repo:allow_attempts:allow:3"  # Max 3 attempts allowed
+  - "bf:get_repo:time_window:allow:9:17"  # Access restricted to business hours (9 AM - 5 PM)

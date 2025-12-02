@@ -104,7 +104,7 @@ class PolicyEngine:
         enforcer = get_enforcer(caveat.policy_name)
         if enforcer:
             logger.debug(f"Executing enforcer for policy '{caveat.policy_name}' with caveat: {caveat.raw}")
-            return enforcer(caveat=caveat, context=context, result=result, macaroon=macaroon, *caveat.params)
+            return enforcer(caveat, context, result,macaroon, *caveat.params)
         else:
             logger.warning(f"No enforcer registered for policy '{caveat.policy_name}'. Skipping caveat: {caveat.raw}")
             return []
